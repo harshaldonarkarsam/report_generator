@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Report Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #ff7f00 0%, #ff9500 50%, #ffb347 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, rgba(255, 127, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%);
+        }
+        
+        .hover-scale {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+        
+        .floating-animation {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(255, 127, 0, 0.3);
+        }
+        
+        .rating-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .rating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .rating-btn.selected {
+            background: linear-gradient(135deg, #ff7f00, #ff9500);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg no-print">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center floating-animation">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Report Generator</h1>
+                        <p class="text-orange-100">Create Professional Internship Reports</p>
+                    </div>
+                </div>
+                <button onclick="generatePDF()" class="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover-scale glow-effect">
+                    📥 Download PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Form Section -->
+        <div class="no-print mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-8 gradient-card border border-orange-100">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="mr-3">✏️</span>Edit Report Details
+                </h2>
+                
+                <!-- Basic Information -->
+                <div class="grid md:grid-cols-2 gap-6 mb-8">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Company Logo</label>
+                            <input type="file" id="companyLogo" accept="image/*" onchange="handleLogoUpload(this)"
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                            <div id="logoPreview" class="mt-2 hidden">
+                                <img id="logoImg" src="" alt="Company Logo" class="h-16 w-auto rounded-lg border border-gray-300">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+                            <input type="text" id="companyName" placeholder="Enter company name" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Intern Name</label>
+                            <input type="text" id="internName" placeholder="Enter intern name" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                            <input type="text" id="department" placeholder="Enter department" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                            <input type="date" id="startDate" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                            <input type="date" id="endDate" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Reviewer Name</label>
+                            <input type="text" id="reviewerName" placeholder="Enter reviewer name" 
+                                class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Lead's Review -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="mr-2">🌟</span>Team Lead's Review
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden">
+                            <thead>
+                                <tr class="gradient-bg text-white">
+                                    <th class="border border-gray-300 p-3 text-left font-semibold">Category</th>
+                                    <th class="border border-gray-300 p-2 text-center">Excellent</th>
+                                    <th class="border border-gray-300 p-2 text-center">Very Good</th>
+                                    <th class="border border-gray-300 p-2 text-center">Satisfactory</th>
+                                    <th class="border border-gray-300 p-2 text-center">Needs Improvement</th>
+                                    <th class="border border-gray-300 p-2 text-center">Unsatisfactory</th>
+                                    <th class="border border-gray-300 p-2 text-center">Not Applicable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teamLeadRatings">
+                                <!-- Ratings will be generated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Team Lead Areas for Improvement -->
+                <div class="mb-8">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">⚠️ Areas for Improvement (Team Lead's View):</h4>
+                    <textarea id="teamLeadImprovements" rows="4" placeholder="Enter areas for improvement..."
+                        class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors"></textarea>
+                </div>
+
+                <!-- HR's Review -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="mr-2">🌟</span>HR's Review
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden">
+                            <thead>
+                                <tr class="gradient-bg text-white">
+                                    <th class="border border-gray-300 p-3 text-left font-semibold">Category</th>
+                                    <th class="border border-gray-300 p-2 text-center">Excellent</th>
+                                    <th class="border border-gray-300 p-2 text-center">Very Good</th>
+                                    <th class="border border-gray-300 p-2 text-center">Satisfactory</th>
+                                    <th class="border border-gray-300 p-2 text-center">Needs Improvement</th>
+                                    <th class="border border-gray-300 p-2 text-center">Unsatisfactory</th>
+                                    <th class="border border-gray-300 p-2 text-center">Not Applicable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hrRatings">
+                                <!-- Ratings will be generated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- HR Areas for Improvement -->
+                <div class="mb-8">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">⚠️ Areas for Improvement (HR's View):</h4>
+                    <textarea id="hrImprovements" rows="4" placeholder="Enter areas for improvement..."
+                        class="w-full p-3 border-2 border-orange-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors"></textarea>
+                </div>
+
+                <button onclick="updateReport()" class="w-full gradient-bg text-white py-4 px-6 rounded-lg font-semibold hover-scale glow-effect text-lg">
+                    🔄 Update Report Preview
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Preview -->
+        <div id="reportPreview" class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <!-- Report content will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        const teamLeadCategories = [
+            'Task Completion Rate',
+            'Learning and Development',
+            'Innovation',
+            'Critical Thinking',
+            'Risk Management',
+            'Business Understanding',
+            'Implementation'
+        ];
+
+        const hrCategories = [
+            'Regularity',
+            'Arrived to Work On-Time',
+            'Ability to Work with Others',
+            'Reliability and Dependability',
+            'Making and Meeting Deadlines'
+        ];
+
+        const ratingOptions = ['Excellent', 'Very Good', 'Satisfactory', 'Needs Improvement', 'Unsatisfactory', 'Not Applicable'];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            generateRatingTables();
+            updateReport();
+            
+            // Set today's date as default review date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('reviewDate').value = today;
+        });
+
+        let companyLogoData = null;
+
+        function handleLogoUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    companyLogoData = e.target.result;
+                    document.getElementById('logoImg').src = companyLogoData;
+                    document.getElementById('logoPreview').classList.remove('hidden');
+                    updateReport();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function generateRatingTables() {
+            // Generate Team Lead ratings table
+            const teamLeadTable = document.getElementById('teamLeadRatings');
+            teamLeadCategories.forEach((category, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-orange-50 transition-colors';
+                row.innerHTML = `
+                    <td class="border border-gray-300 p-3 font-medium">${category}</td>
+                    ${ratingOptions.map(option => `
+                        <td class="border border-gray-300 p-2 text-center">
+                            <button onclick="selectRating('teamLead', ${index}, '${option}')" 
+                                    class="rating-btn w-8 h-8 rounded-full border-2 border-orange-300 hover:border-orange-500" 
+                                    id="teamLead-${index}-${option}">
+                            </button>
+                        </td>
+                    `).join('')}
+                `;
+                teamLeadTable.appendChild(row);
+            });
+
+            // Generate HR ratings table
+            const hrTable = document.getElementById('hrRatings');
+            hrCategories.forEach((category, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-orange-50 transition-colors';
+                row.innerHTML = `
+                    <td class="border border-gray-300 p-3 font-medium">${category}</td>
+                    ${ratingOptions.map(option => `
+                        <td class="border border-gray-300 p-2 text-center">
+                            <button onclick="selectRating('hr', ${index}, '${option}')" 
+                                    class="rating-btn w-8 h-8 rounded-full border-2 border-orange-300 hover:border-orange-500" 
+                                    id="hr-${index}-${option}">
+                            </button>
+                        </td>
+                    `).join('')}
+                `;
+                hrTable.appendChild(row);
+            });
+        }
+
+        let selectedRatings = {
+            teamLead: {},
+            hr: {}
+        };
+
+        function selectRating(section, categoryIndex, option) {
+            // Clear previous selection for this category
+            const categories = section === 'teamLead' ? teamLeadCategories : hrCategories;
+            ratingOptions.forEach(opt => {
+                const btn = document.getElementById(`${section}-${categoryIndex}-${opt}`);
+                btn.classList.remove('selected');
+            });
+
+            // Select new option
+            const selectedBtn = document.getElementById(`${section}-${categoryIndex}-${option}`);
+            selectedBtn.classList.add('selected');
+            
+            // Store selection
+            selectedRatings[section][categoryIndex] = option;
+        }
+
+        function updateReport() {
+            const companyName = document.getElementById('companyName').value || '[Company Name]';
+            const internName = document.getElementById('internName').value || '[Intern\'s Name]';
+            const startDate = document.getElementById('startDate').value || '[Start Date]';
+            const endDate = document.getElementById('endDate').value || '[End Date]';
+            const department = document.getElementById('department').value || '[Department]';
+            const reviewerName = document.getElementById('reviewerName').value || '[Reviewer\'s Name]';
+            const reviewDate = new Date().toLocaleDateString();
+            const teamLeadImprovements = document.getElementById('teamLeadImprovements').value || 'No specific areas identified.';
+            const hrImprovements = document.getElementById('hrImprovements').value || 'No specific areas identified.';
+
+            const reportHTML = `
+                <div class="w-full min-h-screen bg-white">
+                    <!-- Header Section -->
+                    <div class="gradient-bg text-white p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center space-x-6">
+                                ${companyLogoData ? `
+                                    <div class="bg-white p-3 rounded-xl shadow-lg">
+                                        <img src="${companyLogoData}" alt="Company Logo" class="h-16 w-auto">
+                                    </div>
+                                ` : `
+                                    <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                                        <span class="text-3xl">🏢</span>
+                                    </div>
+                                `}
+                                <div>
+                                    <h1 class="text-4xl font-bold mb-1">${companyName}</h1>
+                                    <p class="text-xl text-orange-100">Professional Excellence</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="bg-white bg-opacity-20 px-6 py-3 rounded-lg">
+                                    <p class="text-sm opacity-90">Review Date</p>
+                                    <p class="text-lg font-semibold">${reviewDate}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="text-3xl font-bold mb-2">MID-TERM INTERNSHIP REVIEW</h2>
+                            <div class="w-32 h-1 bg-white mx-auto rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="p-8">
+                        <!-- Basic Information Grid -->
+                        <div class="grid md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl border border-orange-200">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <span class="mr-2">👤</span>Intern Details
+                                </h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium text-gray-600">Name:</span> <span class="font-semibold text-gray-800">${internName}</span></p>
+                                    <p><span class="font-medium text-gray-600">Department:</span> <span class="font-semibold text-gray-800">${department}</span></p>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <span class="mr-2">📅</span>Timeline
+                                </h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium text-gray-600">Start:</span> <span class="font-semibold text-gray-800">${startDate}</span></p>
+                                    <p><span class="font-medium text-gray-600">End:</span> <span class="font-semibold text-gray-800">${endDate}</span></p>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <span class="mr-2">👥</span>Reviewer
+                                </h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium text-gray-600">Name:</span> <span class="font-semibold text-gray-800">${reviewerName}</span></p>
+                                    <p><span class="font-medium text-gray-600">Role:</span> <span class="font-semibold text-gray-800">Team Lead</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Team Lead's Review Section -->
+                        <div class="mb-8">
+                            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+                                <h3 class="text-2xl font-bold flex items-center">
+                                    <span class="mr-3">🌟</span>Team Lead's Performance Review
+                                </h3>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-b-xl overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="bg-gray-50 border-b border-gray-200">
+                                                <th class="text-left p-4 font-semibold text-gray-800 w-1/4">Performance Category</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Excellent</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Very Good</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Satisfactory</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-28">Needs Improvement</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Unsatisfactory</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Not Applicable</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${teamLeadCategories.map((category, index) => `
+                                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                    <td class="p-4 font-medium text-gray-800">${category}</td>
+                                                    ${ratingOptions.map(option => `
+                                                        <td class="text-center p-3">
+                                                            <div class="flex justify-center">
+                                                                ${selectedRatings.teamLead[index] === option ? 
+                                                                    '<div class="w-4 h-4 bg-orange-500 rounded-full"></div>' : 
+                                                                    '<div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>'
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                    `).join('')}
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-6 bg-yellow-50 border-t border-yellow-200">
+                                    <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                                        <span class="mr-2">⚠️</span>Areas for Improvement (Team Lead's View):
+                                    </h4>
+                                    <div class="bg-white p-4 rounded-lg border border-yellow-200">
+                                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">${teamLeadImprovements}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HR's Review Section -->
+                        <div class="mb-8">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-xl">
+                                <h3 class="text-2xl font-bold flex items-center">
+                                    <span class="mr-3">🌟</span>HR's Performance Review
+                                </h3>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-b-xl overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="bg-gray-50 border-b border-gray-200">
+                                                <th class="text-left p-4 font-semibold text-gray-800 w-1/4">Performance Category</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Excellent</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Very Good</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Satisfactory</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-28">Needs Improvement</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Unsatisfactory</th>
+                                                <th class="text-center p-3 font-semibold text-gray-800 min-w-24">Not Applicable</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${hrCategories.map((category, index) => `
+                                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                    <td class="p-4 font-medium text-gray-800">${category}</td>
+                                                    ${ratingOptions.map(option => `
+                                                        <td class="text-center p-3">
+                                                            <div class="flex justify-center">
+                                                                ${selectedRatings.hr[index] === option ? 
+                                                                    '<div class="w-4 h-4 bg-blue-500 rounded-full"></div>' : 
+                                                                    '<div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>'
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                    `).join('')}
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-6 bg-blue-50 border-t border-blue-200">
+                                    <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                                        <span class="mr-2">⚠️</span>Areas for Improvement (HR's View):
+                                    </h4>
+                                    <div class="bg-white p-4 rounded-lg border border-blue-200">
+                                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">${hrImprovements}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Signatures Section -->
+                        <div class="grid md:grid-cols-2 gap-8 mt-12 pt-8 border-t-2 border-gray-200">
+                            <div class="text-center">
+                                <div class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 h-24 mb-4 rounded-xl flex items-center justify-center">
+                                    <div class="text-center">
+                                        <span class="text-gray-400 text-sm">Head Signature</span>
+                                        <div class="text-gray-300 mt-1">📝</div>
+                                    </div>
+                                </div>
+                                <div class="border-t-2 border-gray-800 w-48 mx-auto mb-2"></div>
+                                <p class="font-bold text-gray-800">Signature of Department Head</p>
+                                <p class="text-sm text-gray-600">Date: ${reviewDate}</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 h-24 mb-4 rounded-xl flex items-center justify-center">
+                                    <div class="text-center">
+                                        <span class="text-gray-400 text-sm">HR Signature</span>
+                                        <div class="text-gray-300 mt-1">📝</div>
+                                    </div>
+                                </div>
+                                <div class="border-t-2 border-gray-800 w-48 mx-auto mb-2"></div>
+                                <p class="font-bold text-gray-800">Signature of HR Manager</p>
+                                <p class="text-sm text-gray-600">Date: ${reviewDate}</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-12 pt-6 border-t border-gray-200 text-center">
+                            <p class="text-gray-500 text-sm">This report is confidential and intended for internal use only.</p>
+                            <p class="text-gray-400 text-xs mt-1">Generated on ${new Date().toLocaleDateString()} • ${companyName}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reportPreview').innerHTML = reportHTML;
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('reportPreview');
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 210;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                const internName = document.getElementById('internName').value || 'Intern';
+                pdf.save(`${internName}_Internship_Report.pdf`);
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            }
+        }
+
+        // Auto-update report when form fields change
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'text' || e.target.type === 'date' || e.target.tagName === 'TEXTAREA') {
+                updateReport();
+            }
+        });
+    </script>
+</body>
+</html>
