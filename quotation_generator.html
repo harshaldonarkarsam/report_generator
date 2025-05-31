@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation Generator - Sambhav AI & TECH Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #F97316; /* Orange-500 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #EA580C; /* Orange-600 */
+        }
+        /* You can add more theme-specific global styles if needed */
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="bg-white rounded-lg shadow-xl p-6 sm:p-8"> 
+            <div class="text-center mb-8">
+                <img src="YOUR_LOGO_URL_HERE.png" alt="Sambhav AI & TECH Services Logo" id="companyLogoDisplay" class="mx-auto h-16 sm:h-20 mb-4">
+                <h1 class="text-3xl font-bold text-orange-600">Quotation Generator</h1>
+                <p class="text-sm text-gray-600">Sambhav AI & TECH Services</p>
+            </div>
+            
+            <!-- Company Information (Static) -->
+            <div class="mb-8 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                <h2 class="text-xl font-semibold text-orange-700 mb-3">Company Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700">
+                    <div><strong>Name:</strong> Sambhav AI & TECH Services</div>
+                    <div><strong>Website:</strong> <a href="https://sambhavaintech.com" target="_blank" class="text-orange-600 hover:text-orange-700 underline">sambhavaintech.com</a></div>
+                    <div><strong>Contact:</strong> 8600722160</div>
+                    <div><strong>Email:</strong> <a href="mailto:business@sambhavaintech.com" class="text-orange-600 hover:text-orange-700 underline">business@sambhavaintech.com</a></div>
+                </div>
+            </div>
+
+            <!-- Client Information -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Client Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
+                        <input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Contact *</label>
+                        <input type="text" id="clientContact" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Address *</label>
+                        <textarea id="clientAddress" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotation Details -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Quotation Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quotation Number *</label>
+                        <input type="text" id="quotationNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                        <input type="date" id="quotationDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Valid Until *</label>
+                        <input type="date" id="validUntil" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reference Site (Optional)</label>
+                        <input type="url" id="referenceSite" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="https://example.com">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Section -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Services</h2>
+                    <button onclick="addService()" class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition duration-200 shadow-md">+ Add Service</button>
+                </div>
+                
+                <div id="servicesContainer" class="space-y-4">
+                    <!-- Services will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Services Table -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Services Overview</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full">
+                        <thead class="bg-gray-700 text-white"> 
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Service Name</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Payment Term</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">One-Time Cost</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Monthly Cost</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Yearly Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTable" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cost Summary -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Cost Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-orange-50 p-4 rounded-lg shadow">
+                        <h3 class="font-semibold text-orange-700 mb-2">One-Time Payment</h3>
+                        <div class="space-y-1 text-sm text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="oneTimeSubtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Tax (10%):</span>
+                                <span id="oneTimeTax">$0.00</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-gray-800 border-t border-orange-200 pt-1 mt-1">
+                                <span>Total:</span>
+                                <span id="oneTimeTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-lg shadow"> 
+                        <h3 class="font-semibold text-orange-700 mb-2">Monthly Payment</h3>
+                        <div class="space-y-1 text-sm text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="monthlySubtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Tax (10%):</span>
+                                <span id="monthlyTax">$0.00</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-gray-800 border-t border-orange-200 pt-1 mt-1">
+                                <span>Total:</span>
+                                <span id="monthlyTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-lg shadow"> 
+                        <h3 class="font-semibold text-orange-700 mb-2">Yearly Payment</h3>
+                        <div class="space-y-1 text-sm text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="yearlySubtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Tax (10%):</span>
+                                <span id="yearlyTax">$0.00</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-gray-800 border-t border-orange-200 pt-1 mt-1">
+                                <span>Total:</span>
+                                <span id="yearlyTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Terms and Conditions</h2>
+                <textarea id="termsConditions" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm">1. Payment Terms: Payment is due within 30 days of invoice date.
+2. Scope of Work: This quotation covers the services outlined above. Any additional work will be quoted separately.
+3. Validity: This quotation is valid for 30 days from the date mentioned above.
+4. Cancellation: Either party may cancel this agreement with 30 days written notice for recurring services.
+5. Intellectual Property: Upon full payment for custom development (one-time services), intellectual property rights for the deliverables will transfer to the client, unless otherwise specified for licensed software/platforms or ongoing services.
+6. Liability: Our liability is limited to the total value of this contract for the specific service in question.
+7. Force Majeure: Neither party shall be liable for delays due to circumstances beyond their control.
+8. Governing Law: This agreement shall be governed by the laws of [Your Jurisdiction, e.g., India].</textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="saveData()" class="bg-gray-700 text-white px-6 py-3 rounded-md hover:bg-black transition duration-200 shadow-md">Save Data</button>
+                <button onclick="loadData()" class="bg-gray-700 text-white px-6 py-3 rounded-md hover:bg-black transition duration-200 shadow-md">Load Saved Data</button>
+                <button onclick="generatePDF()" class="bg-orange-500 text-white px-6 py-3 rounded-md hover:bg-orange-600 transition duration-200 shadow-md font-semibold">Download PDF</button>
+                <button onclick="clearAll()" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition duration-200 shadow-md">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let services = [];
+        let serviceCounter = 0;
+
+        // --- Static Company Data ---
+        const companyDetails = {
+            name: "Sambhav AI & TECH Services",
+            website: "sambhavaintech.com",
+            contact: "8600722160",
+            email: "business@sambhavaintech.com",
+            addressLines: ["Your Company Address Line 1, Pune", "Maharashtra, India, PIN Code"] // Add your actual address
+        };
+
+        // --- LOGO ---
+        // Replace this with your actual Base64 encoded logo string
+        // To get this: 1. Go to an online "Image to Base64" converter. 2. Upload your logo. 3. Copy the Base64 string.
+        // It will look like: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+        const companyLogoBase64 = "YOUR_LOGO_BASE64_STRING_HERE"; 
+        // Example placeholder (a tiny transparent PNG):
+        // const companyLogoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('quotationDate').value = today;
+            
+            const validUntil = new Date();
+            validUntil.setDate(validUntil.getDate() + 30);
+            document.getElementById('validUntil').value = validUntil.toISOString().split('T')[0];
+            
+            document.getElementById('quotationNumber').value = 'QSAITS-' + Date.now().toString().slice(-5); // Updated prefix
+            
+            // Set logo display in HTML if base64 is provided (optional, if you also want to show it from base64 in HTML)
+            if (companyLogoBase64 && companyLogoBase64 !== "YOUR_LOGO_BASE64_STRING_HERE" && document.getElementById('companyLogoDisplay')) {
+                // document.getElementById('companyLogoDisplay').src = companyLogoBase64; 
+                // Commented out: better to use a direct URL for HTML display for simplicity, base64 for PDF.
+                // If you put a real URL in the <img> tag, that will work for HTML.
+            }
+            
+            if (document.getElementById('servicesContainer').children.length === 0) {
+                addService();
+            }
+        });
+
+        function addService() {
+            serviceCounter++;
+            const serviceDiv = document.createElement('div');
+            serviceDiv.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm'; // Lighter item background
+            serviceDiv.id = `service-${serviceCounter}`;
+            
+            serviceDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-medium text-orange-700">Service ${serviceCounter}</h3>
+                    <button onclick="removeService(${serviceCounter})" class="text-red-500 hover:text-red-700 font-bold">✕</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
+                        <input type="text" id="serviceName-${serviceCounter}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="updateServices()" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Term *</label>
+                        <select id="paymentTerm-${serviceCounter}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="updateServices()" required>
+                            <option value="">Select Payment Term</option>
+                            <option value="One-Time">One-Time</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                        <textarea id="description-${serviceCounter}" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="updateServices()" required></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cost *</label>
+                        <input type="number" id="cost-${serviceCounter}" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" onchange="updateServices()" required>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('servicesContainer').appendChild(serviceDiv);
+            updateServices(); 
+        }
+
+        function removeService(id) {
+            const serviceDiv = document.getElementById(`service-${id}`);
+            if (serviceDiv) {
+                serviceDiv.remove();
+                updateServices();
+            }
+        }
+
+        function updateServices() {
+            services = [];
+            const serviceElements = document.querySelectorAll('#servicesContainer > div[id^="service-"]'); 
+            
+            serviceElements.forEach(element => {
+                const id = element.id.split('-')[1];
+                const nameInput = document.getElementById(`serviceName-${id}`);
+                const descriptionInput = document.getElementById(`description-${id}`);
+                const paymentTermInput = document.getElementById(`paymentTerm-${id}`);
+                const costInput = document.getElementById(`cost-${id}`);
+
+                if (nameInput && descriptionInput && paymentTermInput && costInput) {
+                    const name = nameInput.value || '';
+                    const description = descriptionInput.value || '';
+                    const paymentTerm = paymentTermInput.value || '';
+                    const cost = parseFloat(costInput.value || 0);
+                    services.push({ id, name, description, paymentTerm, cost });
+                }
+            });
+            
+            updateTable();
+            updateSummary();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('servicesTable');
+            tbody.innerHTML = ''; 
+            
+            services.forEach(service => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-orange-50 transition-colors duration-150"; // Hover effect for table rows
+                row.innerHTML = `
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-700">${service.name}</td>
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-600">${service.description}</td>
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-700">${service.paymentTerm}</td>
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-700 text-right">${service.paymentTerm === 'One-Time' && service.cost > 0 ? '$' + service.cost.toFixed(2) : '-'}</td>
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-700 text-right">${service.paymentTerm === 'Monthly' && service.cost > 0 ? '$' + service.cost.toFixed(2) : '-'}</td>
+                    <td class="border-b border-gray-200 px-4 py-2 text-sm text-gray-700 text-right">${service.paymentTerm === 'Yearly' && service.cost > 0 ? '$' + service.cost.toFixed(2) : '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSummary() {
+            const oneTimeServices = services.filter(s => s.paymentTerm === 'One-Time' && s.cost > 0);
+            const monthlyServices = services.filter(s => s.paymentTerm === 'Monthly' && s.cost > 0);
+            const yearlyServices = services.filter(s => s.paymentTerm === 'Yearly' && s.cost > 0);
+            
+            const oneTimeSubtotal = oneTimeServices.reduce((sum, s) => sum + s.cost, 0);
+            const monthlySubtotal = monthlyServices.reduce((sum, s) => sum + s.cost, 0);
+            const yearlySubtotal = yearlyServices.reduce((sum, s) => sum + s.cost, 0);
+            
+            const taxRate = 0.10; 
+            const oneTimeTax = oneTimeSubtotal * taxRate;
+            const monthlyTax = monthlySubtotal * taxRate;
+            const yearlyTax = yearlySubtotal * taxRate;
+            
+            document.getElementById('oneTimeSubtotal').textContent = '$' + oneTimeSubtotal.toFixed(2);
+            document.getElementById('oneTimeTax').textContent = '$' + oneTimeTax.toFixed(2);
+            document.getElementById('oneTimeTotal').textContent = '$' + (oneTimeSubtotal + oneTimeTax).toFixed(2);
+            
+            document.getElementById('monthlySubtotal').textContent = '$' + monthlySubtotal.toFixed(2);
+            document.getElementById('monthlyTax').textContent = '$' + monthlyTax.toFixed(2);
+            document.getElementById('monthlyTotal').textContent = '$' + (monthlySubtotal + monthlyTax).toFixed(2);
+            
+            document.getElementById('yearlySubtotal').textContent = '$' + yearlySubtotal.toFixed(2);
+            document.getElementById('yearlyTax').textContent = '$' + yearlyTax.toFixed(2);
+            document.getElementById('yearlyTotal').textContent = '$' + (yearlySubtotal + yearlyTax).toFixed(2);
+        }
+
+        function validateForm() {
+            const requiredFields = [ // Company fields are now static, so removed from here
+                'clientName', 'clientAddress', 'clientContact',
+                'quotationNumber', 'quotationDate', 'validUntil'
+            ];
+            
+            for (let field of requiredFields) {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    alert(`Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`);
+                    element.focus();
+                    return false;
+                }
+            }
+            
+            if (services.length === 0) {
+                alert('Please add at least one service.');
+                return false;
+            }
+
+            for (let i = 0; i < services.length; i++) {
+                const service = services[i];
+                const serviceNumber = service.id; 
+
+                if (!service.name.trim()) {
+                    alert(`Please enter a name for Service ${serviceNumber}.`);
+                    document.getElementById(`serviceName-${serviceNumber}`)?.focus();
+                    return false;
+                }
+                if (!service.paymentTerm) {
+                    alert(`Please select a payment term for Service ${serviceNumber}.`);
+                    document.getElementById(`paymentTerm-${serviceNumber}`)?.focus();
+                    return false;
+                }
+                if (!service.description.trim()) {
+                    alert(`Please enter a description for Service ${serviceNumber}.`);
+                    document.getElementById(`description-${serviceNumber}`)?.focus();
+                    return false;
+                }
+                if (isNaN(service.cost) || service.cost <= 0) {
+                    alert(`Please enter a valid cost greater than 0 for Service ${serviceNumber}.`);
+                    document.getElementById(`cost-${serviceNumber}`)?.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function saveData() {
+            if (!validateForm()) { 
+                alert("Please complete all required fields and add valid services before saving.");
+                return;
+            }
+
+            const data = { // Company details are static, not saved in JSON anymore
+                clientName: document.getElementById('clientName').value,
+                clientAddress: document.getElementById('clientAddress').value,
+                clientContact: document.getElementById('clientContact').value,
+                quotationNumber: document.getElementById('quotationNumber').value,
+                quotationDate: document.getElementById('quotationDate').value,
+                validUntil: document.getElementById('validUntil').value,
+                referenceSite: document.getElementById('referenceSite').value,
+                termsConditions: document.getElementById('termsConditions').value,
+                services: services,
+                serviceCounter: serviceCounter 
+            };
+            
+            const servicesContainer = document.getElementById('servicesContainer');
+            data.servicesHTML = servicesContainer.innerHTML;
+            
+            const dataStr = JSON.stringify(data, null, 2); 
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `quotation_${data.quotationNumber || 'data'}.json`; 
+            document.body.appendChild(link); 
+            link.click();
+            document.body.removeChild(link); 
+            URL.revokeObjectURL(url);
+            
+            alert('Data saved successfully as a JSON file!');
+        }
+
+        function loadData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            // Company details are static, not loaded from JSON
+                            document.getElementById('clientName').value = data.clientName || '';
+                            document.getElementById('clientAddress').value = data.clientAddress || '';
+                            document.getElementById('clientContact').value = data.clientContact || '';
+                            document.getElementById('quotationNumber').value = data.quotationNumber || '';
+                            document.getElementById('quotationDate').value = data.quotationDate || '';
+                            document.getElementById('validUntil').value = data.validUntil || '';
+                            document.getElementById('referenceSite').value = data.referenceSite || '';
+                            document.getElementById('termsConditions').value = data.termsConditions || '';
+                            
+                            serviceCounter = data.serviceCounter || 0; 
+                            
+                            if (data.servicesHTML) {
+                                document.getElementById('servicesContainer').innerHTML = data.servicesHTML;
+                            }
+                            updateServices(); 
+                            alert('Data loaded successfully!');
+                        } catch (error) {
+                            console.error('Error loading data:', error);
+                            alert('Error loading data: ' + error.message + '. Please ensure it is a valid quotation JSON file.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                const formElements = document.querySelectorAll(
+                    '#clientName, #clientContact, #clientAddress, #referenceSite, #termsConditions, input[type="number"]'
+                );
+                formElements.forEach(element => {
+                    element.value = '';
+                });
+                
+                document.getElementById('servicesContainer').innerHTML = '';
+                services = [];
+                serviceCounter = 0; 
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('quotationDate').value = today;
+                const validUntil = new Date();
+                validUntil.setDate(validUntil.getDate() + 30);
+                document.getElementById('validUntil').value = validUntil.toISOString().split('T')[0];
+                document.getElementById('quotationNumber').value = 'QSAITS-' + Date.now().toString().slice(-5);
+                
+                document.getElementById('termsConditions').value = `1. Payment Terms: Payment is due within 30 days of invoice date.
+2. Scope of Work: This quotation covers the services outlined above. Any additional work will be quoted separately.
+3. Validity: This quotation is valid for 30 days from the date mentioned above.
+4. Cancellation: Either party may cancel this agreement with 30 days written notice for recurring services.
+5. Intellectual Property: Upon full payment for custom development (one-time services), intellectual property rights for the deliverables will transfer to the client, unless otherwise specified for licensed software/platforms or ongoing services.
+6. Liability: Our liability is limited to the total value of this contract for the specific service in question.
+7. Force Majeure: Neither party shall be liable for delays due to circumstances beyond their control.
+8. Governing Law: This agreement shall be governed by the laws of [Your Jurisdiction, e.g., India].`;
+                
+                addService(); 
+                updateTable();
+                updateSummary();
+                alert('All data cleared.');
+            }
+        }
+
+        async function generatePDF() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf; 
+            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            // --- PDF Theme Colors (Orange, Black, White/Grays) ---
+            const themeOrange = [249, 115, 22];     // Tailwind orange-500 (F97316)
+            const themeDarkOrange = [234, 88, 12];  // Tailwind orange-600 (EA580C)
+            const themeBlack = [17, 24, 39];        // Tailwind gray-900 (almost black)
+            const themeGray = [55, 65, 81];         // Tailwind gray-700
+            const themeLightGray = [229, 231, 235]; // Tailwind gray-200
+            const themeWhite = [255, 255, 255];
+
+            const pageMargin = 15;
+            const contentWidth = pdf.internal.pageSize.getWidth() - 2 * pageMargin;
+            let yPosition = pageMargin;
+
+            function checkAndAddPage(increment = 10) {
+                if (yPosition + increment > pdf.internal.pageSize.getHeight() - pageMargin) {
+                    pdf.addPage();
+                    yPosition = pageMargin;
+                }
+            }
+            
+            // --- Add Logo to PDF ---
+            if (companyLogoBase64 && companyLogoBase64 !== "YOUR_LOGO_BASE64_STRING_HERE") {
+                try {
+                    const imgProps = pdf.getImageProperties(companyLogoBase64);
+                    const logoHeight = 15; // Desired logo height in mm
+                    const logoWidth = (imgProps.width * logoHeight) / imgProps.height;
+                    pdf.addImage(companyLogoBase64, 'PNG', pageMargin, yPosition, logoWidth, logoHeight);
+                    yPosition += logoHeight + 5; // Space after logo
+                } catch (e) {
+                    console.error("Error adding logo to PDF:", e);
+                    // pdf.text("Error loading logo.", pageMargin, yPosition); yPosition += 7;
+                }
+            } else {
+                 yPosition += 5; // Minimal space if no logo
+            }
+            checkAndAddPage();
+
+
+            // Header Text
+            pdf.setFontSize(20);
+            pdf.setTextColor(...themeOrange);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('QUOTATION', pdf.internal.pageSize.getWidth() - pageMargin, yPosition, { align: 'right' });
+            pdf.setFont(undefined, 'normal');
+            yPosition += 10;
+            checkAndAddPage();
+            
+            // Company Information (Left) & Quotation Details (Right)
+            const detailsStartY = yPosition;
+            pdf.setFontSize(9);
+            pdf.setTextColor(...themeGray);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('FROM:', pageMargin, yPosition);
+            pdf.setFont(undefined, 'normal');
+            yPosition += 5;
+            
+            pdf.setTextColor(...themeBlack);
+            pdf.setFontSize(8);
+            pdf.text(companyDetails.name, pageMargin, yPosition); yPosition += 4;
+            companyDetails.addressLines.forEach(line => {
+                pdf.text(line, pageMargin, yPosition); yPosition += 4;
+            });
+            pdf.text(`Website: ${companyDetails.website}`, pageMargin, yPosition); yPosition += 4;
+            pdf.text(`Contact: ${companyDetails.contact}`, pageMargin, yPosition); yPosition += 4;
+            pdf.text(`Email: ${companyDetails.email}`, pageMargin, yPosition); yPosition += 4;
+
+            // Quotation Details (Right Side)
+            let rightColX = pdf.internal.pageSize.getWidth() / 2 + 10;
+            let tempY = detailsStartY; 
+            pdf.setFontSize(8);
+
+            function addDetail(label, value) {
+                pdf.setTextColor(...themeGray);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(label, rightColX, tempY);
+                pdf.setTextColor(...themeBlack);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(value, rightColX + 28, tempY); // Adjust offset as needed
+                tempY += 5;
+            }
+            addDetail('Quotation #:', document.getElementById('quotationNumber').value);
+            addDetail('Date:', document.getElementById('quotationDate').value);
+            addDetail('Valid Until:', document.getElementById('validUntil').value);
+            if (document.getElementById('referenceSite').value) {
+                addDetail('Reference:', document.getElementById('referenceSite').value);
+            }
+
+            // Client Information (Left, below company)
+            yPosition = Math.max(yPosition, tempY) + 8; 
+            checkAndAddPage();
+            pdf.setFontSize(9);
+            pdf.setTextColor(...themeGray);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('TO:', pageMargin, yPosition);
+            pdf.setFont(undefined, 'normal');
+            yPosition += 5;
+            
+            pdf.setTextColor(...themeBlack);
+            pdf.setFontSize(8);
+            pdf.text(document.getElementById('clientName').value, pageMargin, yPosition); yPosition += 4;
+            const clientAddressLines = document.getElementById('clientAddress').value.split('\n');
+            clientAddressLines.forEach(line => {
+                pdf.text(line, pageMargin, yPosition); yPosition += 4;
+            });
+            pdf.text(document.getElementById('clientContact').value, pageMargin, yPosition);
+            
+            yPosition += 10; 
+            checkAndAddPage();
+            
+            // Services Table
+            pdf.setFontSize(11);
+            pdf.setTextColor(...themeDarkOrange);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('SERVICES', pageMargin, yPosition);
+            pdf.setFont(undefined, 'normal');
+            yPosition += 7;
+            checkAndAddPage();
+            
+            const tableHeaders = ['Service', 'Description', 'Term', 'Cost'];
+            const colWidths = [contentWidth * 0.25, contentWidth * 0.40, contentWidth * 0.15, contentWidth * 0.20];
+            
+            pdf.setFontSize(8);
+            pdf.setFillColor(...themeBlack); // Black header background
+            pdf.setTextColor(...themeWhite); // White header text
+            pdf.setFont(undefined, 'bold');
+            pdf.rect(pageMargin, yPosition - 4, contentWidth, 7, 'F'); 
+            let currentX = pageMargin + 2;
+            tableHeaders.forEach((header, i) => {
+                const align = (i === 3 ? 'right' : 'left');
+                const textX = (align === 'right') ? (currentX + colWidths[i] - 2) : currentX;
+                pdf.text(header, textX, yPosition, { align: align, maxWidth: colWidths[i] - 4 });
+                currentX += colWidths[i];
+            });
+            pdf.setFont(undefined, 'normal');
+            yPosition += 6; 
+            
+            pdf.setTextColor(...themeBlack);
+            pdf.setFontSize(7.5); // Slightly smaller for table content
+            services.forEach((service, index) => {
+                checkAndAddPage(15); 
+                const rowStartY = yPosition;
+                let maxRowHeight = 0;
+                const cellPadding = 1.5; // Vertical padding within cell
+
+                // Background for alternate rows (zebra striping)
+                if (index % 2 !== 0) {
+                    pdf.setFillColor(...themeLightGray); // Light gray for alternate rows
+                    // We need to calculate maxRowHeight first, then draw rect. Delaying rect drawing.
+                }
+
+                // Service Name
+                let serviceNameLines = pdf.splitTextToSize(service.name, colWidths[0] - 4);
+                pdf.text(serviceNameLines, pageMargin + 2, yPosition);
+                maxRowHeight = Math.max(maxRowHeight, serviceNameLines.length * 3.5);
+
+                // Description
+                let descLines = pdf.splitTextToSize(service.description, colWidths[1] - 4);
+                pdf.text(descLines, pageMargin + colWidths[0] + 2, yPosition);
+                maxRowHeight = Math.max(maxRowHeight, descLines.length * 3.5);
+                
+                // Payment Term
+                pdf.text(service.paymentTerm, pageMargin + colWidths[0] + colWidths[1] + 2, yPosition);
+                maxRowHeight = Math.max(maxRowHeight, 1 * 3.5); // Single line
+                
+                // Cost
+                let costText = (service.cost > 0 ? '$' + service.cost.toFixed(2) : '-');
+                pdf.text(costText, pageMargin + contentWidth - 2 , yPosition, { align: 'right', maxWidth: colWidths[3] - 4 });
+                maxRowHeight = Math.max(maxRowHeight, 1 * 3.5); // Single line
+
+                // Draw zebra stripe background if needed
+                if (index % 2 !== 0) {
+                    pdf.setFillColor(...themeLightGray);
+                    pdf.rect(pageMargin, rowStartY - cellPadding, contentWidth, maxRowHeight + cellPadding*2 -1 , 'F');
+                    // Redraw text on top of stripe
+                    pdf.setTextColor(...themeBlack); // Ensure text color is reset
+                    pdf.text(serviceNameLines, pageMargin + 2, yPosition);
+                    pdf.text(descLines, pageMargin + colWidths[0] + 2, yPosition);
+                    pdf.text(service.paymentTerm, pageMargin + colWidths[0] + colWidths[1] + 2, yPosition);
+                    pdf.text(costText, pageMargin + contentWidth - 2 , yPosition, { align: 'right', maxWidth: colWidths[3] - 4 });
+                }
+                
+                yPosition = rowStartY + maxRowHeight + cellPadding * 2 - 1; // Adjust for padding
+                pdf.setDrawColor(...themeLightGray);
+                pdf.line(pageMargin, yPosition -1, pageMargin + contentWidth, yPosition -1); // Row separator
+            });
+            pdf.setDrawColor(...themeBlack); // Reset draw color
+            
+            yPosition += 8; 
+            checkAndAddPage();
+            
+            // Cost Summary
+            pdf.setFontSize(11);
+            pdf.setTextColor(...themeDarkOrange);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('COST SUMMARY', pageMargin, yPosition);
+            pdf.setFont(undefined, 'normal');
+            yPosition += 7;
+            checkAndAddPage();
+
+            const summaryLabelX = pageMargin + contentWidth - 60; // Align labels to the left of amounts
+            const summaryAmountX = pageMargin + contentWidth - 5; // Align amounts to the right
+            
+            pdf.setFontSize(8);
+            
+            function addSummarySection(title, term) {
+                const filteredServices = services.filter(s => s.paymentTerm === term && s.cost > 0);
+                if (filteredServices.length > 0) {
+                    const subtotal = filteredServices.reduce((sum, s) => sum + s.cost, 0);
+                    const tax = subtotal * 0.1; // Assuming 10% tax
+                    const total = subtotal + tax;
+
+                    pdf.setTextColor(...themeBlack);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(title, pageMargin, yPosition);
+                    pdf.setFont(undefined, 'normal');
+                    yPosition += 5; checkAndAddPage(5);
+
+                    pdf.setTextColor(...themeGray);
+                    pdf.text('Subtotal:', summaryLabelX, yPosition, {align: 'right'});
+                    pdf.setTextColor(...themeBlack);
+                    pdf.text('$' + subtotal.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
+                    yPosition += 5; checkAndAddPage(5);
+
+                    pdf.setTextColor(...themeGray);
+                    pdf.text('Tax (10%):', summaryLabelX, yPosition, {align: 'right'});
+                    pdf.setTextColor(...themeBlack);
+                    pdf.text('$' + tax.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
+                    yPosition += 5; checkAndAddPage(5);
+                    
+                    pdf.setDrawColor(...themeLightGray);
+                    pdf.line(summaryLabelX - 10, yPosition - 2, summaryAmountX, yPosition - 2);
+
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setTextColor(...themeBlack);
+                    pdf.text('Total:', summaryLabelX, yPosition, {align: 'right'});
+                    pdf.text('$' + total.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
+                    pdf.setFont(undefined, 'normal');
+                    yPosition += 8; checkAndAddPage(8);
+                }
+            }
+            addSummarySection('One-Time Payment:', 'One-Time');
+            addSummarySection('Monthly Recurring Payment:', 'Monthly');
+            addSummarySection('Yearly Recurring Payment:', 'Yearly');
+            
+            yPosition += 5; 
+            checkAndAddPage();
+            
+            // Terms and Conditions
+            pdf.setFontSize(11);
+            pdf.setTextColor(...themeDarkOrange);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('TERMS AND CONDITIONS', pageMargin, yPosition);
+            pdf.setFont(undefined, 'normal');
+            yPosition += 7;
+            checkAndAddPage();
+            
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(...themeGray);
+            const termsText = document.getElementById('termsConditions').value;
+            const termsLines = pdf.splitTextToSize(termsText, contentWidth); 
+            termsLines.forEach(line => {
+                checkAndAddPage(3.5); 
+                pdf.text(line, pageMargin, yPosition);
+                yPosition += 3.5;
+            });
+            
+            yPosition += 15; 
+            checkAndAddPage(30); 
+            
+            // Signature area
+            pdf.setFontSize(8);
+            pdf.setTextColor(...themeGray);
+            const signatureWidth = contentWidth / 2 - 10; 
+            
+            pdf.text('Company Signature:', pageMargin, yPosition);
+            pdf.setDrawColor(...themeBlack);
+            pdf.line(pageMargin, yPosition + 12, pageMargin + signatureWidth, yPosition + 12); 
+            pdf.text('Date:', pageMargin, yPosition + 18);
+            pdf.line(pageMargin + 15, yPosition + 18, pageMargin + signatureWidth, yPosition + 18); 
+
+            const clientSigX = pageMargin + contentWidth / 2 + 5;
+            pdf.text('Client Signature:', clientSigX, yPosition);
+            pdf.line(clientSigX, yPosition + 12, clientSigX + signatureWidth, yPosition + 12); 
+            pdf.text('Date:', clientSigX, yPosition + 18);
+            pdf.line(clientSigX + 15, yPosition + 18, clientSigX + signatureWidth, yPosition + 18); 
+            
+            // Footer - Company Name
+            const pageCount = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(7);
+                pdf.setTextColor(...themeGray);
+                pdf.text(companyDetails.name, pageMargin, pdf.internal.pageSize.getHeight() - pageMargin/2, {align: 'left'});
+                pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.getWidth() - pageMargin, pdf.internal.pageSize.getHeight() - pageMargin/2, {align: 'right'});
+            }
+
+            // Save PDF
+            const clientNameForFile = document.getElementById('clientName').value.replace(/\s+/g, '_') || 'Client';
+            const quoteNumForFile = document.getElementById('quotationNumber').value || 'Quote';
+            const filename = `Quotation_${quoteNumForFile}_${clientNameForFile}.pdf`;
+            pdf.save(filename);
+        }
+    </script>
+</body>
+</html>
