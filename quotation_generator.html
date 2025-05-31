@@ -184,6 +184,9 @@
         </div>
     </div>
 
+    <div id="pdfPreviewContainer" style="display: none; width: 794px; padding: 20px; background-color: white; font-family: Arial, sans-serif; box-sizing: border-box;">
+    </div>
+
     <script>
         let services = [];
         let serviceCounter = 0;
@@ -222,7 +225,7 @@
             document.addEventListener('click', function(event) {
                 const openDropdowns = document.querySelectorAll('.searchable-dropdown-list');
                 openDropdowns.forEach(dropdown => {
-                    if (!dropdown.parentElement.contains(event.target)) {
+                    if (dropdown.parentElement && !dropdown.parentElement.contains(event.target)) {
                         dropdown.classList.add('hidden');
                     }
                 });
@@ -602,324 +605,239 @@
             }
         }
 
+        async function buildPdfPreviewHTML() {
+            const previewContainer = document.getElementById('pdfPreviewContainer');
+            previewContainer.innerHTML = ''; 
+
+            const themeOrangeHex = "#F97316";
+            const themeDarkOrangeHex = "#EA580C";
+            const themeBlackHex = "#111827";
+            const themeGrayHex = "#374151";
+            const themeLightGrayHex = "#E5E7EB";
+            const themeTableBorderHex = "#D1D5DB"; // gray-300 for table borders
+
+            let htmlContent = `<div style="color: ${themeBlackHex}; font-size: 9pt; line-height: 1.4;">`; // Base font size and line height
+
+            htmlContent += `
+                <table style="width: 100%; margin-bottom: 10mm;">
+                    <tr>
+                        <td style="width: 65%; vertical-align: top;">
+                            <img src="${companyLogoBase64}" alt="${companyDetails.name} Logo" style="width: 55mm; height: auto; display: block; margin-bottom: 5mm;">
+                        </td>
+                        <td style="width: 35%; text-align: right; vertical-align: top;">
+                            <h1 style="font-size: 20pt; color: ${themeOrangeHex}; font-weight: bold; margin: 0;">QUOTATION</h1>
+                        </td>
+                    </tr>
+                </table>`;
+            
+            const clientNameVal = document.getElementById('clientName').value || "Valued Client";
+            htmlContent += `
+                <div style="margin-bottom: 7mm;">
+                    <p>Dear ${clientNameVal},</p>
+                    <p style="margin-top: 3mm;">We are pleased to provide you with the following quotation for our services. We are confident that our solutions can significantly benefit your business objectives.</p>
+                </div>`;
+
+            htmlContent += `
+                <table style="width: 100%; margin-bottom: 7mm; font-size: 8pt; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; vertical-align: top; padding-right: 5mm; box-sizing: border-box;">
+                            <strong style="color: ${themeGrayHex}; display: block; margin-bottom: 1mm;">FROM:</strong>
+                            ${companyDetails.name}<br>
+                            ${companyDetails.addressLines.join('<br>')}<br>
+                            Website: ${companyDetails.website}<br>
+                            Contact: ${companyDetails.contact}<br>
+                            Email: ${companyDetails.email}
+                        </td>
+                        <td style="width: 50%; vertical-align: top; padding-left: 5mm; box-sizing: border-box;">
+                            <strong style="color: ${themeGrayHex};">Quotation #:</strong> ${document.getElementById('quotationNumber').value}<br>
+                            <strong style="color: ${themeGrayHex};">Date:</strong> ${document.getElementById('quotationDate').value}<br>
+                            <strong style="color: ${themeGrayHex};">Valid Until:</strong> ${document.getElementById('validUntil').value}<br>
+                            ${document.getElementById('referenceSite').value ? `<strong style="color: ${themeGrayHex};">Reference:</strong> ${document.getElementById('referenceSite').value}<br>` : ''}
+                            <br> 
+                            <strong style="color: ${themeGrayHex}; display: block; margin-bottom: 1mm;">TO:</strong>
+                            ${clientNameVal}<br>
+                            ${document.getElementById('clientAddress').value.replace(/\n/g, '<br>')}<br>
+                            ${document.getElementById('clientContact').value}
+                        </td>
+                    </tr>
+                </table>`;
+
+            htmlContent += `
+                <h2 style="font-size: 11pt; color: ${themeDarkOrangeHex}; font-weight: bold; margin-top: 7mm; margin-bottom: 3mm; border-bottom: 1px solid ${themeLightGrayHex}; padding-bottom: 1mm;">SERVICES PROPOSED</h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+                    <thead>
+                        <tr style="background-color: ${themeBlackHex}; color: white;">
+                            <th style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; text-align: left;">Service</th>
+                            <th style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; text-align: left;">Description</th>
+                            <th style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; text-align: left;">Term</th>
+                            <th style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; text-align: right;">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            services.forEach((service, index) => {
+                htmlContent += `
+                        <tr style="${index % 2 !== 0 ? `background-color: #f9fafb;` : ''}">
+                            <td style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; vertical-align: top;">${service.name}</td>
+                            <td style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; vertical-align: top;">${service.description}</td>
+                            <td style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; vertical-align: top;">${service.paymentTerm}</td>
+                            <td style="border: 1px solid ${themeTableBorderHex}; padding: 2mm; text-align: right; vertical-align: top;">${service.cost > 0 ? '₹' + service.cost.toFixed(2) : '-'}</td>
+                        </tr>`;
+            });
+            htmlContent += `
+                    </tbody>
+                </table>`;
+            
+            htmlContent += `<h2 style="font-size: 11pt; color: ${themeDarkOrangeHex}; font-weight: bold; margin-top: 7mm; margin-bottom: 3mm; border-bottom: 1px solid ${themeLightGrayHex}; padding-bottom: 1mm;">INVESTMENT SUMMARY</h2>`;
+            
+            function addSummarySectionHTML(title, term) {
+                const filteredServices = services.filter(s => s.paymentTerm === term && s.cost > 0);
+                if (filteredServices.length > 0) {
+                    const subtotal = filteredServices.reduce((sum, s) => sum + s.cost, 0);
+                    const tax = subtotal * 0.10; 
+                    const total = subtotal + tax;
+                    htmlContent += `
+                        <div style="margin-bottom: 5mm; font-size: 9pt; overflow: auto;">
+                            <div style="float: left; font-weight: bold; color: ${themeBlackHex};">${title}</div>
+                            <div style="float: right; text-align: right; width: 100mm;">
+                                <table style="width: 100%; text-align: right;">
+                                    <tr><td style="color: ${themeGrayHex}; padding-right: 2mm;">Subtotal:</td><td>₹${subtotal.toFixed(2)}</td></tr>
+                                    <tr><td style="color: ${themeGrayHex}; padding-right: 2mm;">Tax (10%):</td><td>₹${tax.toFixed(2)}</td></tr>
+                                    <tr><td colspan="2" style="border-top: 1px solid ${themeLightGrayHex}; padding-top: 1mm; margin-top: 1mm;"></td></tr>
+                                    <tr><td style="font-weight: bold; padding-right: 2mm;">Total:</td><td style="font-weight: bold;">₹${total.toFixed(2)}</td></tr>
+                                </table>
+                            </div>
+                            <div style="clear: both;"></div>
+                        </div>`;
+                }
+            }
+            addSummarySectionHTML('One-Time Investment:', 'One-Time');
+            addSummarySectionHTML('Monthly Recurring Investment:', 'Monthly');
+            addSummarySectionHTML('Yearly Recurring Investment:', 'Yearly');
+
+            htmlContent += `
+                <h2 style="font-size: 11pt; color: ${themeDarkOrangeHex}; font-weight: bold; margin-top: 7mm; margin-bottom: 3mm; border-bottom: 1px solid ${themeLightGrayHex}; padding-bottom: 1mm;">TERMS AND CONDITIONS</h2>
+                <div style="font-size: 8pt; color: ${themeGrayHex}; white-space: pre-wrap;">${document.getElementById('termsConditions').value}</div>`;
+            
+            htmlContent += `
+                <div style="margin-top: 10mm; font-size: 9pt;">
+                    <p>Thank you for the opportunity to provide this quotation. We look forward to partnering with you.</p>
+                    <p style="margin-top: 3mm;">Sincerely,</p>
+                    <div style="margin-top: 3mm; margin-bottom: 1mm;">
+                         <img src="${companyLogoBase64}" alt="${companyDetails.name} Logo" style="width: 35mm; height: auto; display: block;">
+                    </div>
+                    <p style="font-weight: bold; margin-top:0;">${companyDetails.name}</p>
+                </div>`;
+
+            htmlContent += `
+                <table style="width: 100%; margin-top: 15mm; font-size: 9pt; border-spacing: 0 10mm;">
+                    <tr>
+                        <td style="width: 50%; padding-right: 5mm; vertical-align: bottom;">
+                            Accepted By (Company):<br>
+                            <div style="border-bottom: 1px solid ${themeBlackHex}; height: 15mm; margin-top: 2mm;"></div>
+                            Date:
+                            <div style="border-bottom: 1px solid ${themeBlackHex}; height: 7mm; margin-top: 2mm; display: inline-block; width: 30mm; margin-left: 2mm;"></div>
+                        </td>
+                        <td style="width: 50%; padding-left: 5mm; vertical-align: bottom;">
+                            Accepted By (Client):<br>
+                            <div style="border-bottom: 1px solid ${themeBlackHex}; height: 15mm; margin-top: 2mm;"></div>
+                            Date:
+                            <div style="border-bottom: 1px solid ${themeBlackHex}; height: 7mm; margin-top: 2mm; display: inline-block; width: 30mm; margin-left: 2mm;"></div>
+                        </td>
+                    </tr>
+                </table>`;
+            
+            htmlContent += `</div>`;
+            previewContainer.innerHTML = htmlContent;
+            // Add page number placeholder, to be filled by jsPDF loop
+            previewContainer.dataset.pageNumber = "{pageNum}";
+            previewContainer.dataset.totalPages = "{totalPages}";
+
+        }
+
+
         async function generatePDF() {
             if (!validateForm()) {
                 return;
             }
-            
-            const { jsPDF } = window.jspdf; 
-            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-            
-            const themeOrange = [249, 115, 22];    
-            const themeDarkOrange = [234, 88, 12];  
-            const themeBlack = [17, 24, 39];       
-            const themeGray = [55, 65, 81];        
-            const themeLightGray = [229, 231, 235];
-            const themeWhite = [255, 255, 255];
 
-            const pageMargin = 15;
-            const topMargin = 20;
-            const contentWidth = pdf.internal.pageSize.getWidth() - 2 * pageMargin;
-            let yPosition = topMargin;
+            await buildPdfPreviewHTML(); 
 
-            function checkAndAddPage(increment = 10) {
-                if (yPosition + increment > pdf.internal.pageSize.getHeight() - (topMargin / 2)) {
+            const { jsPDF } = window.jspdf;
+            const elementToCapture = document.getElementById('pdfPreviewContainer');
+            
+            elementToCapture.style.display = 'block';
+            elementToCapture.style.position = 'absolute';
+            elementToCapture.style.left = '-9999px'; // Move off-screen
+            elementToCapture.style.top = '-9999px';
+            
+            try {
+                const canvas = await html2canvas(elementToCapture, {
+                    scale: 2.5, 
+                    useCORS: true, 
+                    backgroundColor: '#ffffff',
+                    logging: false, 
+                    width: elementToCapture.offsetWidth, // Use offsetWidth for more accurate width
+                    height: elementToCapture.scrollHeight,
+                    windowWidth: elementToCapture.scrollWidth,
+                    windowHeight: elementToCapture.scrollHeight
+                });
+                
+                elementToCapture.style.display = 'none';
+                elementToCapture.style.position = 'static';
+
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4'); 
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                const canvasWidthPx = canvas.width;
+                const canvasHeightPx = canvas.height;
+
+                // Calculate image height in mm to maintain aspect ratio based on PDF width
+                const imgHeightMM = (canvasHeightPx * pdfWidth) / canvasWidthPx;
+                
+                let heightLeft = imgHeightMM;
+                let position = 0; 
+                let pageNumber = 1;
+
+                // Estimate total pages for footer
+                const totalPages = Math.ceil(imgHeightMM / pdfHeight);
+
+                function addFooter(pdfInstance, currentPage, totalPagesNum) {
+                    pdfInstance.setFontSize(8);
+                    pdfInstance.setTextColor(100); // Gray color
+                    const footerY = pdfHeight - 10;
+                    pdfInstance.text(companyDetails.name, 15, footerY, { align: 'left' });
+                    pdfInstance.text(`Page ${currentPage} of ${totalPagesNum}`, pdfWidth - 15, footerY, { align: 'right' });
+                }
+
+                addFooter(pdf, pageNumber, totalPages);
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightMM);
+                heightLeft -= pdfHeight;
+                
+                while (heightLeft > 0.1) { // Use a small threshold to avoid float precision issues
+                    position -= pdfHeight; 
+                    pageNumber++;
                     pdf.addPage();
-                    yPosition = topMargin;
-                }
-            }
-            
-            let quotationTextX = pdf.internal.pageSize.getWidth() - pageMargin;
-            pdf.setFontSize(22);
-            pdf.setTextColor(...themeOrange);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('QUOTATION', quotationTextX, yPosition + 5 , { align: 'right' }); 
-            pdf.setFont(undefined, 'normal');
-            
-            yPosition += 15; 
-            checkAndAddPage();
-
-            const clientName = document.getElementById('clientName').value || "Valued Client";
-            pdf.setFontSize(10);
-            pdf.setTextColor(...themeBlack);
-            pdf.text(`Dear ${clientName},`, pageMargin, yPosition);
-            yPosition += 6;
-            checkAndAddPage();
-
-            const introText = "We are pleased to provide you with the following quotation for our services. We are confident that our solutions can significantly benefit your business objectives.";
-            const introLines = pdf.splitTextToSize(introText, contentWidth);
-            introLines.forEach(line => {
-                pdf.text(line, pageMargin, yPosition);
-                yPosition += 5;
-                checkAndAddPage();
-            });
-            yPosition += 5; 
-            checkAndAddPage();
-
-            const detailsStartY = yPosition;
-            pdf.setFontSize(9);
-            pdf.setTextColor(...themeGray);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('FROM:', pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 5;
-            
-            pdf.setTextColor(...themeBlack);
-            pdf.setFontSize(8);
-            pdf.text(companyDetails.name, pageMargin, yPosition); yPosition += 4;
-            companyDetails.addressLines.forEach(line => {
-                pdf.text(line, pageMargin, yPosition); yPosition += 4;
-            });
-            pdf.text(`Website: ${companyDetails.website}`, pageMargin, yPosition); yPosition += 4;
-            pdf.text(`Contact: ${companyDetails.contact}`, pageMargin, yPosition); yPosition += 4;
-            pdf.text(`Email: ${companyDetails.email}`, pageMargin, yPosition); yPosition += 4;
-
-            let rightColX = pdf.internal.pageSize.getWidth() / 2 + 10;
-            let tempY = detailsStartY; 
-            pdf.setFontSize(8);
-
-            function addDetail(label, value) {
-                pdf.setTextColor(...themeGray);
-                pdf.setFont(undefined, 'bold');
-                pdf.text(label, rightColX, tempY);
-                pdf.setTextColor(...themeBlack);
-                pdf.setFont(undefined, 'normal');
-                pdf.text(value, rightColX + 28, tempY);
-                tempY += 5;
-            }
-            addDetail('Quotation #:', document.getElementById('quotationNumber').value);
-            addDetail('Date:', document.getElementById('quotationDate').value);
-            addDetail('Valid Until:', document.getElementById('validUntil').value);
-            if (document.getElementById('referenceSite').value) {
-                addDetail('Reference:', document.getElementById('referenceSite').value);
-            }
-
-            yPosition = Math.max(yPosition, tempY) + 8; 
-            checkAndAddPage();
-            pdf.setFontSize(9);
-            pdf.setTextColor(...themeGray);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('TO:', pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 5;
-            
-            pdf.setTextColor(...themeBlack);
-            pdf.setFontSize(8);
-            pdf.text(document.getElementById('clientName').value, pageMargin, yPosition); yPosition += 4;
-            const clientAddressLines = document.getElementById('clientAddress').value.split('\n');
-            clientAddressLines.forEach(line => {
-                pdf.text(line, pageMargin, yPosition); yPosition += 4;
-            });
-            pdf.text(document.getElementById('clientContact').value, pageMargin, yPosition);
-            
-            yPosition += 10; 
-            checkAndAddPage();
-            
-            pdf.setFontSize(11);
-            pdf.setTextColor(...themeDarkOrange);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('SERVICES PROPOSED', pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 7;
-            checkAndAddPage();
-            
-            const tableHeaders = ['Service', 'Description', 'Term', 'Cost'];
-            const colWidths = [contentWidth * 0.25, contentWidth * 0.40, contentWidth * 0.15, contentWidth * 0.20];
-            
-            pdf.setFontSize(8);
-            pdf.setFillColor(...themeBlack); 
-            pdf.setTextColor(...themeWhite); 
-            pdf.setFont(undefined, 'bold');
-            pdf.rect(pageMargin, yPosition - 4, contentWidth, 7, 'F'); 
-            let currentX = pageMargin + 2;
-            tableHeaders.forEach((header, i) => {
-                const align = (i === 3 ? 'right' : 'left');
-                const textX = (align === 'right') ? (currentX + colWidths[i] - 2) : currentX;
-                pdf.text(header, textX, yPosition, { align: align, maxWidth: colWidths[i] - 4 });
-                currentX += colWidths[i];
-            });
-            pdf.setFont(undefined, 'normal');
-            yPosition += 6; 
-            
-            pdf.setTextColor(...themeBlack);
-            pdf.setFontSize(7.5); 
-            services.forEach((service, index) => {
-                checkAndAddPage(15); 
-                const rowStartY = yPosition;
-                let maxRowHeight = 0;
-                const cellPadding = 1.5;
-
-                let serviceNameLines = pdf.splitTextToSize(service.name, colWidths[0] - 4);
-                pdf.text(serviceNameLines, pageMargin + 2, yPosition);
-                maxRowHeight = Math.max(maxRowHeight, serviceNameLines.length * 3.5);
-
-                let descLines = pdf.splitTextToSize(service.description, colWidths[1] - 4);
-                pdf.text(descLines, pageMargin + colWidths[0] + 2, yPosition);
-                maxRowHeight = Math.max(maxRowHeight, descLines.length * 3.5);
-                
-                pdf.text(service.paymentTerm, pageMargin + colWidths[0] + colWidths[1] + 2, yPosition);
-                maxRowHeight = Math.max(maxRowHeight, 1 * 3.5); 
-                
-                let costText = (service.cost > 0 ? '₹' + service.cost.toFixed(2) : '-');
-                pdf.text(costText, pageMargin + contentWidth - 2 , yPosition, { align: 'right', maxWidth: colWidths[3] - 4 });
-                maxRowHeight = Math.max(maxRowHeight, 1 * 3.5); 
-
-                if (index % 2 !== 0) {
-                    pdf.setFillColor(...themeLightGray);
-                    pdf.rect(pageMargin, rowStartY - cellPadding, contentWidth, maxRowHeight + cellPadding*2 -1 , 'F');
-                    pdf.setTextColor(...themeBlack); 
-                    pdf.text(serviceNameLines, pageMargin + 2, yPosition);
-                    pdf.text(descLines, pageMargin + colWidths[0] + 2, yPosition);
-                    pdf.text(service.paymentTerm, pageMargin + colWidths[0] + colWidths[1] + 2, yPosition);
-                    pdf.text(costText, pageMargin + contentWidth - 2 , yPosition, { align: 'right', maxWidth: colWidths[3] - 4 });
+                    addFooter(pdf, pageNumber, totalPages);
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightMM);
+                    heightLeft -= pdfHeight;
                 }
                 
-                yPosition = rowStartY + maxRowHeight + cellPadding * 2 - 1; 
-                pdf.setDrawColor(...themeLightGray);
-                pdf.line(pageMargin, yPosition -1, pageMargin + contentWidth, yPosition -1); 
-            });
-            pdf.setDrawColor(...themeBlack); 
-            
-            yPosition += 8; 
-            checkAndAddPage();
-            
-            pdf.setFontSize(11);
-            pdf.setTextColor(...themeDarkOrange);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('INVESTMENT SUMMARY', pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 7;
-            checkAndAddPage();
+                const clientNameForFile = document.getElementById('clientName').value.replace(/\s+/g, '_') || 'Client';
+                const quoteNumForFile = document.getElementById('quotationNumber').value || 'Quote';
+                pdf.save(`Quotation_${quoteNumForFile}_${clientNameForFile}.pdf`);
 
-            const summaryLabelX = pageMargin + contentWidth - 60; 
-            const summaryAmountX = pageMargin + contentWidth - 5; 
-            
-            pdf.setFontSize(8);
-            
-            function addSummarySection(title, term) {
-                const filteredServices = services.filter(s => s.paymentTerm === term && s.cost > 0);
-                if (filteredServices.length > 0) {
-                    const subtotal = filteredServices.reduce((sum, s) => sum + s.cost, 0);
-                    const tax = subtotal * 0.1; 
-                    const total = subtotal + tax;
+            } catch (error) {
+                console.error('Error generating PDF with html2canvas:', error);
+                alert('Error generating PDF. Please check the console for details and try again.');
+                elementToCapture.style.display = 'none';
+                elementToCapture.style.position = 'static';
 
-                    pdf.setTextColor(...themeBlack);
-                    pdf.setFont(undefined, 'bold');
-                    pdf.text(title, pageMargin, yPosition);
-                    pdf.setFont(undefined, 'normal');
-                    yPosition += 5; checkAndAddPage(5);
-
-                    pdf.setTextColor(...themeGray);
-                    pdf.text('Subtotal:', summaryLabelX, yPosition, {align: 'right'});
-                    pdf.setTextColor(...themeBlack);
-                    pdf.text('₹' + subtotal.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
-                    yPosition += 5; checkAndAddPage(5);
-
-                    pdf.setTextColor(...themeGray);
-                    pdf.text('Tax (10%):', summaryLabelX, yPosition, {align: 'right'});
-                    pdf.setTextColor(...themeBlack);
-                    pdf.text('₹' + tax.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
-                    yPosition += 5; checkAndAddPage(5);
-                    
-                    pdf.setDrawColor(...themeLightGray);
-                    pdf.line(summaryLabelX - 10, yPosition - 2, summaryAmountX, yPosition - 2);
-
-                    pdf.setFont(undefined, 'bold');
-                    pdf.setTextColor(...themeBlack);
-                    pdf.text('Total:', summaryLabelX, yPosition, {align: 'right'});
-                    pdf.text('₹' + total.toFixed(2), summaryAmountX, yPosition, { align: 'right'});
-                    pdf.setFont(undefined, 'normal');
-                    yPosition += 8; checkAndAddPage(8);
-                }
             }
-            addSummarySection('One-Time Investment:', 'One-Time');
-            addSummarySection('Monthly Recurring Investment:', 'Monthly');
-            addSummarySection('Yearly Recurring Investment:', 'Yearly');
-            
-            yPosition += 5; 
-            checkAndAddPage();
-            
-            pdf.setFontSize(11);
-            pdf.setTextColor(...themeDarkOrange);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('TERMS AND CONDITIONS', pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 7;
-            checkAndAddPage();
-            
-            pdf.setFontSize(7.5);
-            pdf.setTextColor(...themeGray);
-            const termsTextVal = document.getElementById('termsConditions').value;
-            const termsLines = pdf.splitTextToSize(termsTextVal, contentWidth); 
-            termsLines.forEach(line => {
-                checkAndAddPage(3.5); 
-                pdf.text(line, pageMargin, yPosition);
-                yPosition += 3.5;
-            });
-            
-            yPosition += 10;
-            checkAndAddPage(55); // Increased space for closing + logo
-            pdf.setFontSize(9);
-            pdf.setTextColor(...themeBlack);
-            pdf.text("Thank you for the opportunity to provide this quotation. We look forward to partnering with you.", pageMargin, yPosition);
-            yPosition += 6;
-            pdf.text("Sincerely,", pageMargin, yPosition);
-            yPosition += 6;
-            
-            if (companyLogoBase64 && companyLogoBase64 !== "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=") {
-                try {
-                    const imgProps = pdf.getImageProperties(companyLogoBase64);
-                    const logoHeight = 15; 
-                    const logoWidth = (imgProps.width * logoHeight) / imgProps.height;
-                    pdf.addImage(companyLogoBase64, 'PNG', pageMargin, yPosition, logoWidth, logoHeight);
-                    yPosition += logoHeight + 2; 
-                } catch (e) {
-                    console.error("Error adding closing logo to PDF:", e);
-                }
-            } else {
-                 yPosition += 2; // Minimal space if no logo
-            }
-            
-            pdf.setFont(undefined, 'bold');
-            pdf.setTextColor(...themeBlack);
-            pdf.text(companyDetails.name, pageMargin, yPosition);
-            pdf.setFont(undefined, 'normal');
-            yPosition += 10;
-
-
-            checkAndAddPage(30); 
-            
-            pdf.setFontSize(8);
-            pdf.setTextColor(...themeGray);
-            const signatureWidth = contentWidth / 2 - 10; 
-            
-            pdf.text('Accepted By (Company):', pageMargin, yPosition);
-            pdf.setDrawColor(...themeBlack);
-            pdf.line(pageMargin, yPosition + 12, pageMargin + signatureWidth, yPosition + 12); 
-            pdf.text('Date:', pageMargin, yPosition + 18);
-            pdf.line(pageMargin + 15, yPosition + 18, pageMargin + signatureWidth, yPosition + 18); 
-
-            const clientSigX = pageMargin + contentWidth / 2 + 5;
-            pdf.text('Accepted By (Client):', clientSigX, yPosition);
-            pdf.line(clientSigX, yPosition + 12, clientSigX + signatureWidth, yPosition + 12); 
-            pdf.text('Date:', clientSigX, yPosition + 18);
-            pdf.line(clientSigX + 15, yPosition + 18, clientSigX + signatureWidth, yPosition + 18); 
-            
-            const pageCount = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                pdf.setPage(i);
-                pdf.setFontSize(7);
-                pdf.setTextColor(...themeGray);
-                pdf.text(companyDetails.name, pageMargin, pdf.internal.pageSize.getHeight() - (topMargin / 2.5) , {align: 'left'});
-                pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.getWidth() - pageMargin, pdf.internal.pageSize.getHeight() - (topMargin / 2.5), {align: 'right'});
-            }
-
-            const clientNameForFile = document.getElementById('clientName').value.replace(/\s+/g, '_') || 'Client';
-            const quoteNumForFile = document.getElementById('quotationNumber').value || 'Quote';
-            const filename = `Quotation_${quoteNumForFile}_${clientNameForFile}.pdf`;
-            pdf.save(filename);
         }
-
     </script>
 </body>
 </html>
