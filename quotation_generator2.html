@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Quotation Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // Fix jsPDF reference
+        window.jsPDF = window.jspdf.jsPDF;
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact; }
+        }
+        .searchable-select {
+            position: relative;
+        }
+        .searchable-select input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+        .searchable-select .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+        .searchable-select .dropdown.show {
+            display: block;
+        }
+        .searchable-select .dropdown div {
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        .searchable-select .dropdown div:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="quotation-content" class="max-w-4xl mx-auto bg-white shadow-lg">
+        <!-- Header -->
+        <div class="bg-orange-500 text-white p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <img src="http://prad0023.github.io/report_generator/sambhav_logo.png" alt="Company Logo" class="w-12 h-12 rounded-full mr-4" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4" style="display: none;">
+                        <span class="text-orange-500 font-bold text-xl">TC</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">TechCorp Solutions</h1>
+                        <p class="text-orange-100">Innovative Technology Solutions for Modern Business</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-xl font-semibold">QUOTATION</h2>
+                    <p class="text-orange-100">Quote #<span id="quote-number"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Details Section -->
+        <div class="p-6 border-b">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- From Section (Static) -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-orange-200 pb-1">FROM</h3>
+                    <div class="text-gray-700">
+                        <p class="font-semibold">TechCorp Solutions</p>
+                        <p>123 Tech Street</p>
+                        <p>Bangalore, Karnataka 560001</p>
+                        <p>Phone: +91 98765 43210</p>
+                        <p>Email: info@techcorp.com</p>
+                        <p>GST: 29ABCDE1234F1Z5</p>
+                    </div>
+                </div>
+
+                <!-- To Section (Editable) -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-orange-200 pb-1">TO</h3>
+                    <div class="space-y-2">
+                        <input type="text" id="client-name" placeholder="Client Name" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        <input type="text" id="client-company" placeholder="Company Name" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        <textarea id="client-address" placeholder="Address" rows="3" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"></textarea>
+                        <input type="tel" id="client-phone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        <input type="email" id="client-email" placeholder="Email Address" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quote Details -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Quote Date</label>
+                    <input type="date" id="quote-date" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
+                    <input type="date" id="valid-until" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Cover Letter -->
+        <div class="p-6 border-b bg-gray-50">
+            <p class="text-gray-700">
+                Dear <span id="cover-client-name" class="font-semibold text-orange-600">[Client Name]</span>,
+            </p>
+            <p class="mt-2 text-gray-700">
+                We are pleased to present this quotation for our services.
+            </p>
+        </div>
+
+        <!-- Services Section -->
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Services & Investment</h3>
+            
+            <!-- Services Table -->
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-orange-500 text-white">
+                            <th class="border border-gray-300 p-3 text-left">Service</th>
+                            <th class="border border-gray-300 p-3 text-left">Description</th>
+                            <th class="border border-gray-300 p-3 text-left">Term</th>
+                            <th class="border border-gray-300 p-3 text-right">Amount (₹)</th>
+                            <th class="border border-gray-300 p-3 text-center no-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="services-table">
+                        <!-- Services will be added here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Service Button -->
+            <button id="add-service" class="no-print bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-medium transition-colors">
+                + Add Service
+            </button>
+
+            <!-- Investment Summary -->
+            <div id="investment-summary" class="mt-8 bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Investment Summary by Term</h4>
+                <div id="summary-content">
+                    <!-- Summary will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="p-6 border-t">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Terms and Conditions</h3>
+            <textarea id="terms-conditions" rows="6" class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none" placeholder="Enter terms and conditions...">1. Payment terms: 50% advance, 50% on completion
+2. Project timeline will be confirmed after requirement analysis
+3. Client to provide necessary access and resources
+4. Any additional requirements will be quoted separately
+5. All prices are exclusive of applicable taxes
+6. This quotation is valid for 30 days from the date of issue</textarea>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-orange-500 text-white p-6">
+            <div class="text-center">
+                <p class="mb-2">Thanks for your interest. We look forward to doing business with you.</p>
+                <p class="font-semibold">Sincerely,</p>
+                <div class="flex items-center justify-center mt-2">
+                    <img src="http://prad0023.github.io/report_generator/sambhav_logo.png" alt="Company Logo" class="w-8 h-8 rounded-full mr-2" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-2" style="display: none;">
+                        <span class="text-orange-500 font-bold text-sm">TC</span>
+                    </div>
+                    <span class="font-semibold">TechCorp Solutions</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview and Export Buttons -->
+    <div class="no-print max-w-4xl mx-auto p-4 space-y-3">
+        <button id="preview-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+            👁️ Preview Report
+        </button>
+        <button id="download-pdf" class="w-full bg-black hover:bg-gray-800 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+            📄 Download as PDF
+        </button>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold">Quotation Preview</h3>
+                    <button id="close-preview" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <div id="preview-content" class="p-4">
+                    <!-- Preview content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Service options
+        const serviceOptions = [
+            'Mobile app dev',
+            'Web dev',
+            'AI Automation',
+            'Chatbot',
+            'Digital marketing'
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeQuotation();
+            setupEventListeners();
+        });
+
+        function initializeQuotation() {
+            // Generate random quotation number
+            const quoteNumber = 'QT' + Date.now().toString().slice(-6);
+            document.getElementById('quote-number').textContent = quoteNumber;
+
+            // Set current date and validity date
+            const today = new Date();
+            const validUntil = new Date(today);
+            validUntil.setDate(validUntil.getDate() + 30);
+
+            document.getElementById('quote-date').value = today.toISOString().split('T')[0];
+            document.getElementById('valid-until').value = validUntil.toISOString().split('T')[0];
+
+            // Add first service row
+            addServiceRow();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('add-service').addEventListener('click', addServiceRow);
+            document.getElementById('download-pdf').addEventListener('click', downloadPDF);
+            document.getElementById('preview-btn').addEventListener('click', showPreview);
+            document.getElementById('close-preview').addEventListener('click', closePreview);
+            
+            // Close modal on outside click
+            document.getElementById('preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePreview();
+                }
+            });
+            
+            // Update cover letter client name when client name changes
+            document.getElementById('client-name').addEventListener('input', function() {
+                const clientName = this.value || '[Client Name]';
+                document.getElementById('cover-client-name').textContent = clientName;
+            });
+        }
+
+        function addServiceRow() {
+            const tbody = document.getElementById('services-table');
+            const row = document.createElement('tr');
+            row.className = 'border-b';
+            
+            const rowId = 'service-' + Date.now();
+            
+            row.innerHTML = `
+                <td class="border border-gray-300 p-2">
+                    <div class="searchable-select">
+                        <input type="text" class="service-input w-full p-2 border border-gray-300 rounded" placeholder="Search or select service..." />
+                        <div class="dropdown">
+                            ${serviceOptions.map(option => `<div data-value="${option}">${option}</div>`).join('')}
+                        </div>
+                    </div>
+                </td>
+                <td class="border border-gray-300 p-2">
+                    <textarea class="description-input w-full p-2 border border-gray-300 rounded resize-none" rows="2" placeholder="Service description..."></textarea>
+                </td>
+                <td class="border border-gray-300 p-2">
+                    <select class="term-input w-full p-2 border border-gray-300 rounded">
+                        <option value="One-time">One-time</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Annually">Annually</option>
+                    </select>
+                </td>
+                <td class="border border-gray-300 p-2">
+                    <input type="number" class="amount-input w-full p-2 border border-gray-300 rounded text-right" placeholder="0" min="0" />
+                </td>
+                <td class="border border-gray-300 p-2 text-center no-print">
+                    <button class="remove-service bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm">Remove</button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            
+            // Setup searchable select
+            setupSearchableSelect(row.querySelector('.searchable-select'));
+            
+            // Setup remove button
+            row.querySelector('.remove-service').addEventListener('click', function() {
+                row.remove();
+                updateInvestmentSummary();
+            });
+            
+            // Setup amount input change listener
+            row.querySelector('.amount-input').addEventListener('input', updateInvestmentSummary);
+            row.querySelector('.term-input').addEventListener('change', updateInvestmentSummary);
+        }
+
+        function setupSearchableSelect(container) {
+            const input = container.querySelector('input');
+            const dropdown = container.querySelector('.dropdown');
+            
+            input.addEventListener('focus', function() {
+                dropdown.classList.add('show');
+            });
+            
+            input.addEventListener('blur', function() {
+                setTimeout(() => dropdown.classList.remove('show'), 200);
+            });
+            
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                const options = dropdown.querySelectorAll('div');
+                
+                options.forEach(option => {
+                    const text = option.textContent.toLowerCase();
+                    option.style.display = text.includes(value) ? 'block' : 'none';
+                });
+            });
+            
+            dropdown.querySelectorAll('div').forEach(option => {
+                option.addEventListener('click', function() {
+                    input.value = this.dataset.value;
+                    dropdown.classList.remove('show');
+                });
+            });
+        }
+
+        function updateInvestmentSummary() {
+            const rows = document.querySelectorAll('#services-table tr');
+            const summary = {};
+            
+            rows.forEach(row => {
+                const serviceInput = row.querySelector('.service-input');
+                const descriptionInput = row.querySelector('.description-input');
+                const termInput = row.querySelector('.term-input');
+                const amountInput = row.querySelector('.amount-input');
+                
+                if (serviceInput && termInput && amountInput) {
+                    const service = serviceInput.value;
+                    const description = descriptionInput.value;
+                    const term = termInput.value;
+                    const amount = parseFloat(amountInput.value) || 0;
+                    
+                    if (term && amount > 0) {
+                        if (!summary[term]) {
+                            summary[term] = {
+                                total: 0,
+                                services: []
+                            };
+                        }
+                        summary[term].total += amount;
+                        summary[term].services.push({
+                            service: service || 'Unnamed Service',
+                            description: description,
+                            amount: amount
+                        });
+                    }
+                }
+            });
+            
+            const summaryContent = document.getElementById('summary-content');
+            let summaryHTML = '';
+            
+            // Group by term with individual service details - NO TOTAL CALCULATION
+            Object.keys(summary).forEach(term => {
+                summaryHTML += `
+                    <div class="mb-4 p-3 bg-white rounded border-l-4 border-orange-500">
+                        <h5 class="font-semibold text-orange-600 mb-2">${term} Services</h5>
+                `;
+                
+                summary[term].services.forEach(item => {
+                    summaryHTML += `
+                        <div class="flex justify-between items-start mb-1 text-sm">
+                            <div class="flex-1">
+                                <span class="font-medium">${item.service}</span>
+                                ${item.description ? `<br><span class="text-gray-600 text-xs">${item.description}</span>` : ''}
+                            </div>
+                            <span class="font-medium ml-2">₹${item.amount.toLocaleString('en-IN')}</span>
+                        </div>
+                    `;
+                });
+                
+                summaryHTML += `
+                        <div class="border-t pt-2 mt-2">
+                            <div class="flex justify-between items-center font-semibold">
+                                <span>${term} Subtotal:</span>
+                                <span class="text-orange-600">₹${summary[term].total.toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            summaryContent.innerHTML = summaryHTML || '<p class="text-gray-500">No services added yet</p>';
+        }
+
+        function showPreview() {
+            const modal = document.getElementById('preview-modal');
+            const previewContent = document.getElementById('preview-content');
+            
+            // Get form data
+            const formData = getFormData();
+            
+            // Generate clean document-style preview
+            const documentHTML = generateDocumentPreview(formData);
+            previewContent.innerHTML = documentHTML;
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function getFormData() {
+            const quoteNumber = document.getElementById('quote-number').textContent;
+            const quoteDate = document.getElementById('quote-date').value;
+            const validUntil = document.getElementById('valid-until').value;
+            
+            // Client details
+            const clientName = document.getElementById('client-name').value || '[Client Name]';
+            const clientCompany = document.getElementById('client-company').value || '';
+            const clientAddress = document.getElementById('client-address').value || '';
+            const clientPhone = document.getElementById('client-phone').value || '';
+            const clientEmail = document.getElementById('client-email').value || '';
+            
+            // Services
+            const services = [];
+            const rows = document.querySelectorAll('#services-table tr');
+            rows.forEach(row => {
+                const serviceInput = row.querySelector('.service-input');
+                const descriptionInput = row.querySelector('.description-input');
+                const termInput = row.querySelector('.term-input');
+                const amountInput = row.querySelector('.amount-input');
+                
+                if (serviceInput && termInput && amountInput) {
+                    const service = serviceInput.value;
+                    const description = descriptionInput.value;
+                    const term = termInput.value;
+                    const amount = parseFloat(amountInput.value) || 0;
+                    
+                    if (service && amount > 0) {
+                        services.push({
+                            service,
+                            description,
+                            term,
+                            amount
+                        });
+                    }
+                }
+            });
+            
+            // Terms and conditions
+            const termsConditions = document.getElementById('terms-conditions').value;
+            
+            return {
+                quoteNumber,
+                quoteDate,
+                validUntil,
+                clientName,
+                clientCompany,
+                clientAddress,
+                clientPhone,
+                clientEmail,
+                services,
+                termsConditions
+            };
+        }
+
+        function generateDocumentPreview(data) {
+            // Group services by term
+            const servicesByTerm = {};
+            data.services.forEach(service => {
+                if (!servicesByTerm[service.term]) {
+                    servicesByTerm[service.term] = [];
+                }
+                servicesByTerm[service.term].push(service);
+            });
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            };
+
+            return `
+                <div style="max-width: 800px; margin: 0 auto; padding: 40px; font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
+                    <!-- Header -->
+                    <table style="width: 100%; margin-bottom: 30px;">
+                        <tr>
+                            <td style="width: 100px; vertical-align: top;">
+                                <img src="http://prad0023.github.io/report_generator/sambhav_logo.png" 
+                                     style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8f9fa;" 
+                                     onerror="this.style.display='none';">
+                            </td>
+                            <td style="vertical-align: top; padding-left: 20px;">
+                                <h1 style="margin: 0; font-size: 24px; color: #000; font-weight: bold;">TechCorp Solutions</h1>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Innovative Technology Solutions for Modern Business</p>
+                                <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                                    123 Tech Street, Bangalore, Karnataka 560001<br>
+                                    Phone: +91 98765 43210 | Email: info@techcorp.com | GST: 29ABCDE1234F1Z5
+                                </p>
+                            </td>
+                            <td style="text-align: right; vertical-align: top; width: 200px;">
+                                <h2 style="margin: 0; font-size: 20px; color: #000; font-weight: bold;">QUOTATION</h2>
+                                <p style="margin: 5px 0; font-size: 14px;">Quote #${data.quoteNumber}</p>
+                                <p style="margin: 5px 0; font-size: 12px;">Date: ${formatDate(data.quoteDate)}</p>
+                                <p style="margin: 5px 0; font-size: 12px;">Valid Until: ${formatDate(data.validUntil)}</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Client Information -->
+                    <table style="width: 100%; margin-bottom: 30px; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 50%; vertical-align: top; padding-right: 20px;">
+                                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #000; border-bottom: 2px solid #000; padding-bottom: 5px;">FROM</h3>
+                                <p style="margin: 0; font-size: 14px; line-height: 1.4;">
+                                    <strong>TechCorp Solutions</strong><br>
+                                    123 Tech Street<br>
+                                    Bangalore, Karnataka 560001<br>
+                                    Phone: +91 98765 43210<br>
+                                    Email: info@techcorp.com<br>
+                                    GST: 29ABCDE1234F1Z5
+                                </p>
+                            </td>
+                            <td style="width: 50%; vertical-align: top;">
+                                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #000; border-bottom: 2px solid #000; padding-bottom: 5px;">TO</h3>
+                                <p style="margin: 0; font-size: 14px; line-height: 1.4;">
+                                    <strong>${data.clientName}</strong><br>
+                                    ${data.clientCompany ? data.clientCompany + '<br>' : ''}
+                                    ${data.clientAddress ? data.clientAddress.replace(/\n/g, '<br>') + '<br>' : ''}
+                                    ${data.clientPhone ? 'Phone: ' + data.clientPhone + '<br>' : ''}
+                                    ${data.clientEmail ? 'Email: ' + data.clientEmail : ''}
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Cover Letter -->
+                    <div style="margin-bottom: 30px; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #ccc;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px;">Dear <strong>${data.clientName}</strong>,</p>
+                        <p style="margin: 0; font-size: 14px;">We are pleased to present this quotation for our services.</p>
+                    </div>
+
+                    <!-- Services by Term -->
+                    <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #000;">Services & Investment</h3>
+                    
+                    ${Object.keys(servicesByTerm).map(term => {
+                        const termServices = servicesByTerm[term];
+                        const termTotal = termServices.reduce((sum, service) => sum + service.amount, 0);
+                        
+                        return `
+                            <div style="margin-bottom: 30px; page-break-inside: avoid;">
+                                <h4 style="margin: 0 0 15px 0; font-size: 16px; color: #000; background-color: #f0f0f0; padding: 8px; border-left: 4px solid #666;">${term} Services</h4>
+                                
+                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                                    <thead>
+                                        <tr style="background-color: #f8f9fa;">
+                                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; font-weight: bold;">Service</th>
+                                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; font-weight: bold;">Description</th>
+                                            <th style="border: 1px solid #ddd; padding: 12px; text-align: right; font-size: 14px; font-weight: bold; width: 120px;">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${termServices.map(service => `
+                                            <tr>
+                                                <td style="border: 1px solid #ddd; padding: 12px; font-size: 14px; vertical-align: top;">${service.service}</td>
+                                                <td style="border: 1px solid #ddd; padding: 12px; font-size: 14px; vertical-align: top;">${service.description || '-'}</td>
+                                                <td style="border: 1px solid #ddd; padding: 12px; font-size: 14px; text-align: right; vertical-align: top;">${service.amount.toLocaleString('en-IN')}</td>
+                                            </tr>
+                                        `).join('')}
+                                        <tr style="background-color: #f8f9fa; font-weight: bold;">
+                                            <td colspan="2" style="border: 1px solid #ddd; padding: 12px; font-size: 14px; text-align: right;">
+                                                <strong>${term} Total:</strong>
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 12px; font-size: 14px; text-align: right;">
+                                                <strong>₹${termTotal.toLocaleString('en-IN')}</strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }).join('')}
+
+                    <!-- Terms and Conditions -->
+                    <div style="margin-top: 40px; page-break-inside: avoid;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #000; border-bottom: 2px solid #000; padding-bottom: 5px;">Terms and Conditions</h3>
+                        <div style="font-size: 14px; line-height: 1.6; white-space: pre-line;">${data.termsConditions}</div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="margin-top: 50px; page-break-inside: avoid;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px;">Thanks for your interest. We look forward to doing business with you.</p>
+                        <p style="margin: 0 0 5px 0; font-size: 14px;">Sincerely,</p>
+                        
+                        <div style="margin-top: 15px;">
+                            <img src="http://prad0023.github.io/report_generator/sambhav_logo.png" 
+                                 style="width: 60px; height: 60px; object-fit: contain; border-radius: 4px; background: #f8f9fa; margin-bottom: 10px;" 
+                                 onerror="this.style.display='none';">
+                            <p style="margin: 0; font-size: 14px; font-weight: bold;">TechCorp Solutions</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function downloadPDF() {
+            const modal = document.getElementById('preview-modal');
+            const downloadBtn = document.getElementById('download-pdf');
+            
+            // Show loading state
+            downloadBtn.textContent = 'Generating PDF...';
+            downloadBtn.disabled = true;
+            
+            try {
+                // Get form data and generate document
+                const formData = getFormData();
+                const documentHTML = generateDocumentPreview(formData);
+                
+                // Create temporary container for PDF generation
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = documentHTML;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.top = '0';
+                document.body.appendChild(tempDiv);
+                
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    width: 800,
+                    windowWidth: 800
+                });
+                
+                // Remove temporary div
+                document.body.removeChild(tempDiv);
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 210;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                const quoteNumber = document.getElementById('quote-number').textContent;
+                pdf.save(`Quotation_${quoteNumber}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            } finally {
+                // Reset button state
+                downloadBtn.textContent = '📄 Download as PDF';
+                downloadBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
