@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSplash Adventure Park</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/libs/stats.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.9.1/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.9.1/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-blue: #0099cc;
+            --secondary-blue: #00ccff;
+            --accent-green: #00cc99;
+            --dark-blue: #006699;
+            --light-blue: #e6f7ff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--light-blue), #ffffff);
+            overflow-x: hidden;
+        }
+        
+        .water-bg {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+        }
+        
+        .wave-divider {
+            height: 50px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%230099cc' fill-opacity='0.5' d='M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        
+        .wave-divider-reverse {
+            height: 50px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2300cc99' fill-opacity='0.5' d='M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,106.7C672,117,768,171,864,197.3C960,224,1056,224,1152,197.3C1248,171,1344,117,1392,90.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        
+        .splash-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .splash-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 153, 204, 0.3);
+        }
+        
+        .wait-time {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .park-map-container {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .park-logo-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+        }
+        
+        .booking-confirmation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .confirmation-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            max-width: 500px;
+        }
+        
+        .wave-animation {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2300cc99' fill-opacity='1' d='M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,202.7C672,203,768,181,864,165.3C960,149,1056,139,1152,149.3C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: 200% 100%;
+            animation: wave-animation 2s linear infinite;
+        }
+        
+        @keyframes wave-animation {
+            0% {
+                background-position: 0% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
+        .cart-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        
+        .cart-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: var(--accent-green);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+        }
+        
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .splash-logo {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .splash-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .splash-progress {
+            width: 200px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .splash-progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: white;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .lazy-loaded {
+            opacity: 1;
+        }
+        
+        .filter-pill {
+            transition: all 0.3s ease;
+        }
+        
+        .filter-pill:hover {
+            transform: translateY(-2px);
+        }
+        
+        .filter-pill.active {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            .park-map-container {
+                height: 300px;
+            }
+            
+            .park-logo-container {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-logo" id="splashLogo"></div>
+        <div class="splash-text">AquaSplash Adventure Park</div>
+        <div class="splash-progress">
+            <div class="splash-progress-bar" id="splashProgressBar"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="water-bg text-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="park-logo-container mr-4" id="parkLogo"></div>
+                <h1 class="text-2xl font-bold">AquaSplash Adventure Park</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex space-x-4">
+                    <a href="#home" class="hover:text-blue-200 transition">Home</a>
+                    <a href="#map" class="hover:text-blue-200 transition">Park Map</a>
+                    <a href="#book" class="hover:text-blue-200 transition">Book Tickets</a>
+                    <a href="#attractions" class="hover:text-blue-200 transition">Attractions</a>
+                </div>
+                <div class="relative">
+                    <button id="weatherToggle" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full text-sm flex items-center">
+                        <i class="fas fa-cloud-sun mr-1"></i>
+                        <span id="weatherDisplay">Loading weather...</span>
+                    </button>
+                    <div id="weatherDetails" class="absolute right-0 mt-2 w-64 bg-white text-gray-800 rounded-lg shadow-lg p-4 hidden z-10">
+                        <h3 class="font-bold mb-2">Current Weather</h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p id="weatherTemp">--°C</p>
+                                <p id="weatherCondition">--</p>
+                            </div>
+                            <div id="weatherIcon" class="text-3xl">🌤️</div>
+                        </div>
+                        <div class="mt-2 text-sm">
+                            <p id="weatherImpact">All rides are operational.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section id="home" class="mb-16">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0">
+                    <h2 class="text-4xl font-bold text-blue-800 mb-4">Welcome to AquaSplash</h2>
+                    <p class="text-lg text-gray-700 mb-6">Experience the ultimate water adventure with thrilling slides, relaxing pools, and exciting attractions for the whole family.</p>
+                    <a href="#book" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 inline-block transform hover:scale-105">
+                        Book Your Adventure
+                    </a>
+                </div>
+                <div class="md:w-1/2 lazy-load" id="heroImage">
+                    <img src="https://picsum.photos/seed/aquasplash/800/500.jpg" alt="AquaSplash Adventure Park" class="rounded-lg shadow-xl w-full">
+                </div>
+            </div>
+        </section>
+
+        <div class="wave-divider"></div>
+
+        <!-- Park Map Section -->
+        <section id="map" class="mb-16 lazy-load">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6">Interactive Park Map</h2>
+            <p class="text-gray-700 mb-6">Explore our park and discover all the amazing attractions. Hover over markers to see wait times.</p>
+            
+            <div class="park-map-container" id="parkMap">
+                <!-- 3D map will be rendered here -->
+                <div class="wait-time" id="waitTime"></div>
+            </div>
+            
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-blue-100 p-4 rounded-lg text-center">
+                    <i class="fas fa-water text-blue-600 text-2xl mb-2"></i>
+                    <h3 class="font-bold">Wave Pool</h3>
+                    <p class="text-sm text-gray-600">Family-friendly</p>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-lg text-center">
+                    <i class="fas fa-water text-blue-600 text-2xl mb-2"></i>
+                    <h3 class="font-bold">Lazy River</h3>
+                    <p class="text-sm text-gray-600">Relaxing</p>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-lg text-center">
+                    <i class="fas fa-water text-blue-600 text-2xl mb-2"></i>
+                    <h3 class="font-bold">Tornado Slide</h3>
+                    <p class="text-sm text-gray-600">Thrilling</p>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-lg text-center">
+                    <i class="fas fa-water text-blue-600 text-2xl mb-2"></i>
+                    <h3 class="font-bold">Kiddie Zone</h3>
+                    <p class="text-sm text-gray-600">Kids-only</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="wave-divider-reverse"></div>
+
+        <!-- Ticket Booking Section -->
+        <section id="book" class="mb-16 lazy-load">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6">Book Your Tickets</h2>
+            <p class="text-gray-700 mb-6">Select your visit date and ticket type to start your adventure.</p>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold text-blue-700 mb-4">Select Date & Tickets</h3>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Visit Date</label>
+                            <input type="text" id="datePicker" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Ticket Type</label>
+                            <select id="ticketType" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="standard">Standard Pass - $49.99</option>
+                                <option value="premium">Premium Pass - $69.99</option>
+                                <option value="family">Family Pass (4 people) - $189.99</option>
+                                <option value="season">Season Pass - $249.99</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4                            <label class="block text-gray-700 mb-2">Number of Tickets</label>
+                            <div class="flex items-center">
+                                <button id="decreaseTickets" class="bg-gray-200 px-3 py-1 rounded-l">-</button>
+                                <input type="number" id="ticketCount" value="1" min="1" max="10" class="w-16 p-1 border-t border-b border-gray-300 text-center">
+                                <button id="increaseTickets" class="bg-gray-200 px-3 py-1 rounded-r">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Special Offers</label>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="offer1" class="mr-2">
+                                    <label for="offer1">Add Lunch Voucher (+$12.99)</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="offer2" class="mr-2">
+                                    <label for="offer2">Add Locker Rental (+$5.99)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-bold text-blue-700 mb-4">Price Summary</h3>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <div class="flex justify-between mb-2">
+                                <span>Ticket Price:</span>
+                                <span id="ticketPrice">$49.99</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span>Number of Tickets:</span>
+                                <span id="ticketCountSummary">1</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span>Special Offers:</span>
+                                <span id="offersSummary">$0.00</span>
+                            </div>
+                            <div class="border-t border-blue-200 my-2"></div>
+                            <div class="flex justify-between font-bold text-lg">
+                                <span>Total:</span>
+                                <span id="totalPrice">$49.99</span>
+                            </div>
+                        </div>
+                        
+                        <button id="addToCart" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                            Add to Cart
+                        </button>
+                        
+                        <div class="mt-4 text-sm text-gray-600">
+                            <p>By booking, you agree to our <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="wave-divider"></div>
+
+        <!-- Attractions Explorer Section -->
+        <section id="attractions" class="mb-16 lazy-load">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6">Attraction Explorer</h2>
+            <p class="text-gray-700 mb-6">Find the perfect water adventure that matches your preferences.</p>
+            
+            <div class="mb-6">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="filter-pill bg-gray-200 hover:bg-blue-100 px-4 py-2 rounded-full text-sm font-medium active" data-filter="all">All Attractions</button>
+                    <button class="filter-pill bg-gray-200 hover:bg-blue-100 px-4 py-2 rounded-full text-sm font-medium" data-filter="thrill">Thrill Seekers</button>
+                    <button class="filter-pill bg-gray-200 hover:bg-blue-100 px-4 py-2 rounded-full text-sm font-medium" data-filter="family">Family Fun</button>
+                    <button class="filter-pill bg-gray-200 hover:bg-blue-100 px-4 py-2 rounded-full text-sm font-medium" data-filter="kids">Kids Zone</button>
+                    <button class="filter-pill bg-gray-200 hover:bg-blue-100 px-4 py-2 rounded-full text-sm font-medium" data-filter="relax">Relaxing</button>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <div class="flex items-center">
+                        <span class="mr-2 text-sm text-gray-700">Thrill Level:</span>
+                        <input type="range" id="thrillLevel" min="0" max="5" value="0" class="w-32">
+                        <span id="thrillLevelValue" class="ml-2 text-sm text-gray-700">Any</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="attractionsGrid">
+                <!-- Attractions will be dynamically loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="water-bg text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">AquaSplash Adventure Park</h3>
+                    <p class="mb-4">The ultimate water adventure destination for the whole family.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="hover:text-blue-200">Home</a></li>
+                        <li><a href="#map" class="hover:text-blue-200">Park Map</a></li>
+                        <li><a href="#book" class="hover:text-blue-200">Book Tickets</a></li>
+                        <li><a href="#attractions" class="hover:text-blue-200">Attractions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Contact Us</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-2"></i>
+                            <span>123 Waterway Avenue, Splash City, SC 12345</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone-alt mt-1 mr-2"></i>
+                            <span>(555) 123-4567</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope mt-1 mr-2"></i>
+                            <span>info@aquasplash.com</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Opening Hours</h3>
+                    <ul class="space-y-2">
+                        <li>Monday - Friday: 10:00 AM - 6:00 PM</li>
+                        <li>Saturday - Sunday: 9:00 AM - 8:00 PM</li>
+                        <li>Holidays: 9:00 AM - 8:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-blue-400 mt-8 pt-6 text-center text-sm">
+                <p>&copy; 2023 AquaSplash Adventure Park. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Icon -->
+    <div class="cart-icon">
+        <div class="relative">
+            <button id="cartButton" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
+                <i class="fas fa-shopping-cart text-xl"></i>
+            </button>
+            <div class="cart-badge" id="cartBadge">0</div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-auto">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Your Cart</h3>
+                <button id="closeCartModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4" id="cartItems">
+                <!-- Cart items will be displayed here -->
+                <div class="text-center text-gray-500 py-8" id="emptyCartMessage">
+                    <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                    <p>Your cart is empty</p>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex justify-between mb-4">
+                    <span class="font-bold">Total:</span>
+                    <span class="font-bold" id="cartTotal">$0.00</span>
+                </div>
+                <button id="checkoutButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Payment Details</h3>
+                <button id="closeCheckoutModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Card Number</label>
+                    <input type="text" placeholder="1234 5678 9012 3456" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Expiry Date</label>
+                        <input type="text" placeholder="MM/YY" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">CVV</label>
+                        <input type="text" placeholder="123" class="w-full p-2 border border-gray-300 rounded">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Name on Card</label>
+                    <input type="text" placeholder="John Doe" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Test Mode</label>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="testMode" class="mr-2" checked>
+                        <label for="testMode">This is a test payment (no real charges)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200">
+                <button id="processPayment" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Process Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Confirmation -->
+    <div class="booking-confirmation" id="bookingConfirmation">
+        <div class="confirmation-content">
+            <div class="text-5xl mb-4">🎉</div>
+            <h3 class="text-2xl font-bold mb-2">Booking Confirmed!</h3>
+            <p class="mb-4">Your tickets have been added to your cart.</p>
+            <div class="wave-animation"></div>
+            <button id="closeConfirmation" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Attraction data
+        const attractions = [
+            {
+                id: 1,
+                name: "Tornado Slide",
+                description: "An extreme water slide that spins you around in a vortex before dropping you into the pool below.",
+                image: "https://picsum.photos/seed/tornado/400/300.jpg",
+                thrillLevel: 5,
+                category: "thrill",
+                waitTime: 45,
+                isAvailable: true
+            },
+            {
+                id: 2,
+                name: "Wave Pool",
+                description: "Experience realistic ocean waves in our massive pool. Perfect for bodyboarding and surfing.",
+                image: "https://picsum.photos/seed/wavepool/400/300.jpg",
+                thrillLevel: 2,
+                category: "family",
+                waitTime: 0,
+                isAvailable: true
+            },
+            {
+                id: 3,
+                name: "Lazy River",
+                description: "Relax and float along our winding river while enjoying the park scenery.",
+                image: "https://picsum.photos/seed/lazyriver/400/300.jpg",
+                thrillLevel: 1,
+                category: "relax",
+                waitTime: 0,
+                isAvailable: true
+            },
+            {
+                id: 4,
+                name: "Kiddie Splash Zone",
+                description: "A safe water play area designed specifically for children under 10 years old.",
+                image: "https://picsum.photos/seed/kiddie/400/300.jpg",
+                thrillLevel: 1,
+                category: "kids",
+                waitTime: 15,
+                isAvailable: true
+            },
+            {
+                id: 5,
+                name: "Black Hole Slide",
+                description: "A dark, twisting tube slide that will give you an adrenaline rush as you race to the bottom.",
+                image: "https://picsum.photos/seed/blackhole/400/300.jpg",
+                thrillLevel: 4,
+                category: "thrill",
+                waitTime: 60,
+                isAvailable: true
+            },
+            {
+                id: 6,
+                name: "Family Raft Ride",
+                description: "Climb aboard a four-person raft for a thrilling ride through tunnels and waterfalls.",
+                image: "https://picsum.photos/seed/raft/400/300.jpg",
+                thrillLevel: 3,
+                category: "family",
+                waitTime: 30,
+                isAvailable: true
+            }
+        ];
+
+        // Cart functionality
+        let cart = [];
+        
+        // Initialize localStorage cart if it exists
+        if (localStorage.getItem('aquasplashCart')) {
+            try {
+                cart = JSON.parse(localStorage.getItem('aquasplashCart'));
+                updateCartBadge();
+            } catch (e) {
+                console.error('Error parsing cart from localStorage:', e);
+                cart = [];
+            }
+        }
+
+        // Ticket prices
+        const ticketPrices = {
+            standard: 49.99,
+            premium: 69.99,
+            family: 189.99,
+            season: 249.99
+        };
+
+        // DOM Elements
+        const ticketTypeSelect = document.getElementById('ticketType');
+        const ticketCountInput = document.getElementById('ticketCount');
+        const ticketPriceElement = document.getElementById('ticketPrice');
+        const ticketCountSummaryElement = document.getElementById('ticketCountSummary');
+        const offersSummaryElement = document.getElementById('offersSummary');
+        const totalPriceElement = document.getElementById('totalPrice');
+        const decreaseTicketsButton = document.getElementById('decreaseTickets');
+        const increaseTicketsButton = document.getElementById('increaseTickets');
+        const addToCartButton = document.getElementById('addToCart');
+        const cartButton = document.getElementById('cartButton');
+        const cartModal = document.getElementById('cartModal');
+        const closeCartModalButton = document.getElementById('closeCartModal');
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartTotalElement = document.getElementById('cartTotal');
+        const cartBadgeElement = document.getElementById('cartBadge');
+        const checkoutButton = document.getElementById('checkoutButton');
+        const checkoutModal = document.getElementById('checkoutModal');
+        const closeCheckoutModalButton = document.getElementById('closeCheckoutModal');
+        const processPaymentButton = document.getElementById('processPayment');
+        const bookingConfirmation = document.getElementById('bookingConfirmation');
+        const closeConfirmationButton = document.getElementById('closeConfirmation');
+        const offer1Checkbox = document.getElementById('offer1');
+        const offer2Checkbox = document.getElementById('offer2');
+        const thrillLevelSlider = document.getElementById('thrillLevel');
+        const thrillLevelValue = document.getElementById('thrillLevelValue');
+        const filterPills = document.querySelectorAll('.filter-pill');
+        const attractionsGrid = document.getElementById('attractionsGrid');
+        const weatherToggle = document.getElementById('weatherToggle');
+        const weatherDetails = document.getElementById('weatherDetails');
+        const weatherDisplay = document.getElementById('weatherDisplay');
+        const weatherTemp = document.getElementById('weatherTemp');
+        const weatherCondition = document.getElementById('weatherCondition');
+        const weatherIcon = document.getElementById('weatherIcon');
+        const weatherImpact = document.getElementById('weatherImpact');
+        const splashScreen = document.getElementById('splashScreen');
+        const splashLogo = document.getElementById('splashLogo');
+        const splashProgressBar = document.getElementById('splashProgressBar');
+        const heroImage document.getElementById('heroImage');
+        const parkLogo = document.getElementById('parkLogo');
+        const parkMap = document.getElementById('parkMap');
+        const waitTimeElement = document.getElementById('waitTime');
+        const datePicker = document.getElementById('datePicker');
+
+        // Initialize date picker
+        flatpickr(datePicker, {
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            disable: [
+                function(date) {
+                    // Disable Sundays (0 is Sunday, 6 is Saturday)
+                    return date.getDay() === 0;
+                }
+            ]
+        });
+
+        // Update ticket price and summary
+        function updateTicketSummary() {
+            const ticketType = ticketTypeSelect.value;
+            const ticketCount = parseInt(ticketCountInput.value);
+            const basePrice = ticketPrices[ticketType];
+            
+            let offerPrice = 0;
+            if (offer1Checkbox.checked) {
+                offerPrice += 12.99;
+            }
+            if (offer2Checkbox.checked) {
+                offerPrice += 5.99;
+            }
+            
+            const totalPrice = (basePrice * ticketCount) + offerPrice;
+            
+            ticketPriceElement.textContent = `$${basePrice.toFixed(2)}`;
+            ticketCountSummaryElement.textContent = ticketCount;
+            offersSummaryElement.textContent = `$${offerPrice.toFixed(2)}`;
+            totalPriceElement.textContent = `$${totalPrice.toFixed(2)}`;
+        }
+
+        // Event listeners for ticket booking
+        ticketTypeSelect.addEventListener('change', updateTicketSummary);
+        ticketCountInput.addEventListener('change', function() {
+            if (this.value < 1) this.value = 1;
+            if (this.value > 10) this.value = 10;
+            updateTicketSummary();
+        });
+        decreaseTicketsButton.addEventListener('click', function() {
+            if (ticketCountInput.value > 1) {
+                ticketCountInput.value = parseInt(ticketCountInput.value) - 1;
+                updateTicketSummary();
+            }
+        });
+        increaseTicketsButton.addEventListener('click', function() {
+            if (ticketCountInput.value < 10) {
+                ticketCountInput.value = parseInt(ticketCountInput.value) + 1;
+                updateTicketSummary();
+            }
+        });
+        offer1Checkbox.addEventListener('change', updateTicketSummary);
+        offer2Checkbox.addEventListener('change', updateTicketSummary);
+
+        // Add to cart functionality
+        addToCartButton.addEventListener('click', function() {
+            const ticketType = ticketTypeSelect.value;
+            const ticketCount = parseInt(ticketCountInput.value);
+            const date = datePicker.value;
+            
+            let offerPrice = 0;
+            let offerDescription = '';
+            if (offer1Checkbox.checked) {
+                offerPrice += 12.99;
+                offerDescription += 'Lunch Voucher, ';
+            }
+            if (offer2Checkbox.checked) {
+                offerPrice += 5.99;
+                offerDescription += 'Locker Rental, ';
+            }
+            
+            if (offerDescription) {
+                offerDescription = offerDescription.slice(0, -2);
+            }
+            
+            const ticketPrice = ticketPrices[ticketType];
+            const totalPrice = (ticketPrice * ticketCount) + offerPrice;
+            
+            const cartItem = {
+                id: Date.now(),
+                type: ticketType,
+                count: ticketCount,
+                date: date,
+                offers: offerDescription,
+                offerPrice: offerPrice,
+                totalPrice: totalPrice
+            };
+            
+            cart.push(cartItem);
+            localStorage.setItem('aquasplashCart', JSON.stringify(cart));
+            
+            updateCartBadge();
+            showBookingConfirmation();
+        });
+
+        // Update cart badge
+        function updateCartBadge() {
+            const totalItems = cart.reduce((total, item) => total + item.count, 0);
+            cartBadgeElement.textContent = totalItems;
+        }
+
+        // Show booking confirmation
+        function showBookingConfirmation() {
+            bookingConfirmation.style.opacity = '1';
+            bookingConfirmation.style.pointerEvents = 'auto';
+            
+            // Animate the wave
+            const waveAnimation = document.querySelector('.wave-animation');
+            waveAnimation.style.animation = 'none';
+            setTimeout(() => {
+                waveAnimation.style.animation = 'wave-animation 2s linear infinite';
+            }, 10);
+            
+            setTimeout(() => {
+                bookingConfirmation.style.opacity = '0';
+                bookingConfirmation.style.pointerEvents = 'none';
+            }, 3000);
+        }
+
+        // Cart modal functionality
+        cartButton.addEventListener('click', function() {
+            renderCartItems();
+            cartModal.classList.remove('hidden');
+        });
+
+        closeCartModalButton.addEventListener('click', function() {
+            cartModal.classList.add('hidden');
+        });
+
+        function renderCartItems() {
+            if (cart.length === 0) {
+                document.getElementById('emptyCartMessage').classList.remove('hidden');
+                cartItemsContainer.querySelectorAll('.cart-item').forEach(item => item.remove());
+            } else {
+                document.getElementById('emptyCartMessage').classList.add('hidden');
+                
+                // Clear existing items
+                cartItemsContainer.querySelectorAll('.cart-item').forEach(item => item.remove());
+                
+                // Add new items
+                let total = 0;
+                
+                cart.forEach(item => {
+                    const cartItemElement = document.createElement('div');
+                    cartItemElement.className = 'cart-item flex justify-between items-center border-b border-gray-200 py-3';
+                    
+                    let ticketTypeText = '';
+                    switch(item.type) {
+                        case 'standard': ticketTypeText = 'Standard Pass'; break;
+                        case 'premium': ticketTypeText = 'Premium Pass'; break;
+                        case 'family': ticketTypeText = 'Family Pass'; break;
+                        case 'season': ticketTypeText = 'Season Pass'; break;
+                    }
+                    
+                    cartItemElement.innerHTML = `
+                        <div>
+                            <h4 class="font-bold">${ticketTypeText} (${item.count}x)</h4>
+                            <p class="text-sm text-gray-600">Date: ${item.date}</p>
+                            ${item.offers ? `<p class="text-sm text-gray-600">Offers: ${item.offers}</p>` : ''}
+                        </div>
+                        <div class="flex items-center">
+                            <span class="mr-4">$${item.totalPrice.toFixed(2)}</span>
+                            <button class="remove-item text-red-500 hover:text-red-700" data-id="${item.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    cartItemsContainer.appendChild(cartItemElement);
+                    total += item.totalPrice;
+                    
+                    // Add event listener to remove button
+                    cartItemElement.querySelector('.remove-item').addEventListener('click', function() {
+                        const itemId = parseInt(this.getAttribute('data-id'));
+                        cart = cart.filter(cartItem => cartItem.id !== itemId);
+                        localStorage.setItem('aquasplashCart', JSON.stringify(cart));
+                        updateCartBadge();
+                        renderCartItems();
+                    });
+                });
+                
+                cartTotalElement.textContent = `$${total.toFixed(2)}`;
+            }
+        }
+
+        // Checkout functionality
+        checkoutButton.addEventListener('click', function() {
+            checkoutModal.classList.remove('hidden');
+        });
+
+        closeCheckoutModalButton.addEventListener('click', function() {
+            checkoutModal.classList.add('hidden');
+        });
+
+        processPaymentButton.addEventListener('click', function() {
+            checkoutModal.classList.add('hidden');
+            
+            // Clear cart after successful payment
+            cart = [];
+            localStorage.removeItem('aquasplashCart');
+            updateCartBadge();
+            
+            // Show success message
+            const successMessage = document.createElement('div');
+            successMessage.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+            successMessage.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Payment processed successfully!</span>
+                </div>
+            `;
+            document.body.appendChild(successMessage);
+            
+            setTimeout(() => {
+                successMessage.remove();
+            }, 3000);
+        });
+
+        // Filter attractions
+        function filterAttractions() {
+            const selectedFilter = document.querySelector('.filter-pill.active').getAttribute('data-filter');
+            const thrillLevel = parseInt(thrillLevelSlider.value);
+            
+            let filteredAttractions = [...attractions];
+            
+            // Apply category filter
+            if (selectedFilter !== 'all') {
+                filteredAttractions = filteredAttractions.filter(attraction => 
+                    attraction.category === selectedFilter
+                );
+            }
+            
+            // Apply thrill level filter
+            if (thrillLevel > 0) {
+                filteredAttractions = filteredAttractions.filter(attraction => 
+                    attraction.thrillLevel >= thrillLevel
+                );
+            }
+            
+            // Render filtered attractions
+            renderAttractions(filteredAttractions);
+        }
+
+        // Render attractions
+        function renderAttractions(attractionsToRender) {
+            attractionsGrid.innerHTML = '';
+            
+            attractionsToRender.forEach(attraction => {
+                const attractionElement = document.createElement('div');
+                attractionElement.className = 'bg-white rounded-lg shadow-lg overflow-hidden splash-card';
+                
+                let availabilityClass = '';
+                let availabilityText = '';
+                
+                if (!attraction.isAvailable) {
+                    availabilityClass = 'opacity-50';
+                    availabilityText = 'Currently Closed';
+                } else if (attraction.waitTime > 45) {
+                    availabilityClass = 'border-l-4 border-yellow-500';
+                    availabilityText = `Long Wait: ${attraction.waitTime} min`;
+                } else if (attraction.waitTime > 0) {
+                    availabilityClass = 'border-l-4 border-blue-500';
+                    availabilityText = `Wait: ${attraction.waitTime} min`;
+                } else {
+                    availabilityClass = 'border-l-4 border-green-500';
+                    availabilityText = 'No Wait';
+                }
+                
+                attractionElement.classList.add(availabilityClass);
+                
+                attractionElement.innerHTML = `
+                    <img src="${attraction.image}" alt="${attraction.name}" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold text-blue-800">${attraction.name}</h3>
+                            <div class="bg-gray-200 px-2 py-1 rounded text-xs font-bold">
+                                ${'★'.repeat(attraction.thrillLevel)}${'☆'.repeat(5 - attraction.thrillLevel)}
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">${attraction.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold ${attraction.isAvailable ? '' : 'line-through text-red-500'}">${availabilityText}</span>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition">
+                                ${attraction.isAvailable ? 'Visit' : 'Opens Soon'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                attractionsGrid.appendChild(attractionElement);
+            });
+        }
+
+        // Event listeners for filters
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', function() {
+                filterPills.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                filterAttractions();
+            });
+        });
+
+        // Thrill level slider
+        thrillLevelSlider.addEventListener('input', function() {
+            const level = parseInt(this.value);
+            let levelText = 'Any';
+            
+            switch(level) {
+                case 1: levelText = 'Low'; break;
+                case 2: levelText = 'Medium'; break;
+                case 3: levelText = 'High'; break;
+                case 4: levelText = 'Very High'; break;
+                case 5: levelText = 'Extreme'; break;
+            }
+            
+            thrillLevelValue.textContent = levelText;
+            filterAttractions();
+        });
+
+        // Weather simulation
+        function updateWeather() {
+            const conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain', 'Heavy Rain'];
+            const icons = ['☀️', '⛅', '☁️', '🌦️', '🌧️'];
+            
+            // Simulate weather based on time of day
+            const hour = new Date().getHours();
+            let conditionIndex;
+            
+            if (hour >= 6 && hour < 12) {
+                // Morning: mostly sunny
+                conditionIndex = Math.random() < 0.8 ? 0 : 1;
+            } else if (hour >= 12 && hour < 18) {
+                // Afternoon: more varied
+                conditionIndex = Math.floor(Math.random() * 3);
+            } else {
+                // Evening: more cloudy/rainy
+                conditionIndex = Math.random() < 0.7 ? 2 : (Math.random() < 0.5 ? 3 : 4);
+            }
+            
+            const condition = conditions[conditionIndex];
+            const icon = icons[conditionIndex];
+            const temp = Math.floor(Math.random() * 15) + 20; // 20-35°C
+            
+            weatherDisplay.textContent = condition;
+            weatherTemp.textContent = `${temp}°C`;
+            weatherCondition.textContent = condition;
+            weatherIcon.textContent = icon;
+            
+            // Update impact on rides
+            let impact = '';
+            if (condition === 'Heavy Rain' || condition === 'Light Rain') {
+                impact = 'Some rides may be closed due to rain.';
+                weatherImpact.className = 'text-yellow-600';
+            } else if (temp > 32) {
+                impact = 'Some rides may have extended wait times due to heat.';
+                weatherImpact.className = 'text-yellow-600';
+            } else {
+                impact = 'All rides are operational.';
+                weatherImpact.className = 'text-green-600';
+            }
+            
+            weatherImpact.textContent = impact;
+        }
+
+        weatherToggle.addEventListener('click', function() {
+            weatherDetails.classList.toggle('hidden');
+        });
+
+        // Initialize attractions
+        renderAttractions(attractions);
+
+        // Initialize ticket summary
+        updateTicketSummary();
+
+        // 3D Park Logo with Three.js
+        function initParkLogo() {
+            const container = document.getElementById('parkLogo');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Create scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0099cc);
+            
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Create water logo
+            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00cc99,
+                shininess: 100,
+                specular: 0xffffff
+            });
+            const logo = new THREE.Mesh(geometry, material);
+            scene.add(logo);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const light1 = new THREE.DirectionalLight(0xffffff, 1);
+            light1.position.set(1, 1, 1);
+            scene.add(light1);
+            
+            const light2 = new THREE.DirectionalLight(0x0099cc, 0.5);
+            light2.position.set(-1, -1, -1);
+            scene.add(light2);
+            
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                logo.rotation.x += 0.01;
+                logo.rotation.y += 0.01;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                
+                renderer.setSize(newWidth, newHeight);
+            });
+        }
+
+        // 3D Park Map with Three.js
+        function initParkMap() {
+            const container = document.getElementById('parkMap');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Create scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0099cc);
+            
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.set(0, 10, 10);
+            camera.lookAt(0, 0, 0);
+            
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Create controls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            
+            // Create ground
+            const groundGeometry = new THREE.PlaneGeometry(20, 20);
+            const groundMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00cc99,
+                side: THREE.DoubleSide
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+            
+            // Create water pool
+            const poolGeometry = new THREE.CircleGeometry(5, 32);
+            const poolMaterial = new THREE.MeshPhongMaterial({
+                color: 0x0099cc,
+                transparent: true,
+                opacity: 0.8
+            });
+            const pool = new THREE.Mesh(poolGeometry, poolMaterial);
+            pool.rotation.x = -Math.PI / 2;
+            pool.position.y = 0.01;
+            scene.add(pool);
+            
+            // Create attractions
+            const attractions = [
+                { name: "Tornado Slide", position: new THREE.Vector3(3, 0, 3), waitTime: 45 },
+                { name: "Wave Pool", position: new THREE.Vector3(0, 0, 0), waitTime: 0 },
+                { name: "Lazy River", position: new THREE.Vector3(-3, 0, -3), waitTime: 0 },
+                { name: "Kiddie Zone", position: new THREE.Vector3(3, 0, -3), waitTime: 15 },
+                { name: "Black Hole Slide", position: new THREE.Vector3(-3, 0, 3), waitTime: 60 },
+                { name: "Family Raft Ride", position: new THREE.Vector3(-6, 0, 0), waitTime: 30 }
+            ];
+            
+            // Create attraction markers
+            attractions.forEach(attraction => {
+                const markerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+                const markerMaterial = new THREE.MeshPhongMaterial({
+                    color: 0xff9900,
+                    emissive: 0xff9900,
+                    emissiveIntensity: 0.5
+                });
+                const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                marker.position.copy(attraction.position                marker.position.y = 0.1;
+                marker.userData = {
+                    name: attraction.name,
+                    waitTime: attraction.waitTime
+                };
+                scene.add(marker);
+                
+                // Add label
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'absolute bg-white text-gray-800 px-2 py-1 rounded text-xs font-bold';
+                labelDiv.style.transform = 'translate(-50%, -100%)';
+                labelDiv.style.pointerEvents = 'none';
+                labelDiv.textContent = attraction.name;
+                labelDiv.style.opacity = '0';
+                labelDiv.style.transition = 'opacity 0.3s ease';
+                container.appendChild(labelDiv);
+                
+                marker.userData.label = labelDiv;
+            });
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const light1 = new THREE.DirectionalLight(0xffffff, 1);
+            light1.position.set(5, 10, 5);
+            scene.add(light1);
+            
+            const light2 = new THREE.DirectionalLight(0x0099cc, 0.5);
+            light2.position.set(-5, 10, -5);
+            scene.add(light2);
+            
+            // Mouse interaction
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            container.addEventListener('mousemove', event => {
+                // Calculate mouse position in normalized device coordinates
+                const rect = container.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                // Update the raycaster
+                raycaster.setFromCamera(mouse, camera);
+                
+                // Find intersections
+                const intersects = raycaster.intersectObjects(scene.children);
+                
+                // Reset all labels
+                scene.children.forEach(child => {
+                    if (child.userData && child.userData.label) {
+                        child.userData.label.style.opacity = '0';
+                    }
+                });
+                
+                // Show label for hovered object
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+                    if (object.userData && object.userData.label) {
+                        object.userData.label.style.opacity = '1';
+                        object.userData.label.style.left = `${event.clientX}px`;
+                        object.userData.label.style.top = `${event.clientY - 20}px`;
+                        
+                        // Show wait time tooltip
+                        waitTimeElement.textContent = object.userData.waitTime > 0 ? 
+                            `${object.userData.name}: ${object.userData.waitTime} min wait` : 
+                            `${object.userData.name}: No wait`;
+                        waitTimeElement.style.left = `${event.clientX}px`;
+                        waitTimeElement.style.top = `${event.clientY + 20}px`;
+                        waitTimeElement.style.opacity = '1';
+                    }
+                } else {
+                    // Hide wait time tooltip
+                    waitTimeElement.style.opacity = '0';
+                }
+            });
+            
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Update controls
+                controls.update();
+                
+                // Animate water
+                pool.material.opacity = 0.7 + Math.sin(Date.now() * 0.001) * 0.1;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                
+                renderer.setSize(newWidth, newHeight);
+            });
+        }
+
+        // Initialize 3D elements after page load
+        window.addEventListener('load', function() {
+            // Initialize 3D elements
+            initParkLogo();
+            initParkMap();
+            
+            // Update weather
+            updateWeather();
+            setInterval(updateWeather, 60000); // Update every minute
+            
+            // Animate splash screen
+            setTimeout(() => {
+                splashProgressBar.style.width = '100%';
+                setTimeout(() => {
+                    splashScreen.style.opacity = '0';
+                    splashScreen.style.pointerEvents = 'none';
+                }, 500);
+            }, 1000);
+            
+            // Lazy load images
+            document.querySelectorAll('.lazy-load').forEach(element => {
+                setTimeout(() => {
+                    element.classList.add('lazy-loaded');
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
